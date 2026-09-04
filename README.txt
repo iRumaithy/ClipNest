@@ -10,3 +10,6 @@ ClipNest PWA v1.4.0
 - رقم الإصدار ظاهر في آخر الإعدادات.
 
 ارفع جميع الملفات معًا إلى نفس مستودع GitHub Pages / Cloudflare Pages.
+
+
+v1.4.1: iOS icon pass — full-bleed source artwork, no transparency, subtle system-safe edge.

@@ -1,537 +1,138 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <meta name="theme-color" content="#F7EEDC" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ClipNest" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-  <title>ClipNest — محفوظاتي</title>
-  <style>
-    :root{
-      --bg:#F7EEDC; --bg2:#EFE1CA; --panel:#FFF9EC; --panel2:#F6EAD8;
-      --text:#5E5146; --muted:#9C8A79; --mint:#7EA7CE; --blue:#678EBA;
-      --taupe:#A68A78; --gold:#C79A52; --danger:#B77470; --warning:#C79A52;
-      --line:rgba(113,91,73,.16); --shadow:0 22px 60px rgba(121,91,58,.13);
-      --r:22px;
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,Arial,sans-serif;color:var(--text);overflow:hidden}
-    body{position:fixed;inset:0;overscroll-behavior:none}
-    button,input,textarea,select{font:inherit}
-    button{color:inherit}
-    .app{height:100dvh;display:flex;flex-direction:column;background:
-      radial-gradient(circle at 14% -7%,rgba(199,154,82,.17),transparent 30%),
-      radial-gradient(circle at 92% 2%,rgba(126,167,206,.18),transparent 34%),
-      linear-gradient(180deg,#FBF5E9 0%,#F4E9D8 100%);overflow:hidden}
-    .top{
-      flex:none;padding:calc(env(safe-area-inset-top) + 12px) 16px 10px;
-      background:linear-gradient(180deg,rgba(247,238,220,.98),rgba(247,238,220,.88),rgba(247,238,220,0));
-      z-index:5
-    }
-    .brandrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brandlogo{width:38px;height:38px;border-radius:12px;display:block;box-shadow:0 10px 24px rgba(157,119,79,.20);object-fit:cover}
-    
-    .brand h1{font-size:18px;margin:0;letter-spacing:.1px;color:#6B5649}
-    .brand p{font-size:11px;color:var(--muted);margin:2px 0 0}
-    .roundbtn{border:1px solid var(--line);background:rgba(255,249,236,.97);width:38px;height:38px;border-radius:13px;display:grid;place-items:center;box-shadow:0 10px 24px rgba(121,91,58,.08)}
-    .searchbar{display:flex;align-items:center;gap:9px;background:rgba(255,249,236,.96);border:1px solid var(--line);border-radius:18px;padding:6px 8px 6px 12px;backdrop-filter:blur(18px);box-shadow:0 12px 30px rgba(121,91,58,.08)}
-    .searchbar svg{opacity:.65;flex:none;color:#9b7f6e}
-    .searchbar input{flex:1;min-width:0;border:0;outline:none;background:transparent;color:var(--text);padding:8px 2px;font-size:15px}
-    .searchbar input::placeholder{color:#b19a89}
-    .pastebtn{border:0;border-radius:12px;background:rgba(103,142,186,.13);color:#557BA5;padding:8px 10px;font-size:12px;font-weight:700}
-    .content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y;padding:4px 16px 120px;scrollbar-width:none}
-    .content::-webkit-scrollbar{display:none}
-    .hero{display:flex;align-items:flex-end;justify-content:space-between;padding:9px 2px 7px}
-    .hero h2{font-size:25px;margin:0 0 3px;font-weight:760;color:#6A5447}
-    .hero .sub{font-size:12px;color:var(--muted)}
-    .count{font-size:12px;color:var(--muted);background:rgba(255,249,242,.92);border:1px solid var(--line);padding:7px 10px;border-radius:999px}
-    .chips{display:flex;gap:8px;overflow-x:auto;padding:6px 0 12px;scrollbar-width:none;touch-action:pan-x}
-    .chips::-webkit-scrollbar{display:none}
-    .chip{flex:none;border:1px solid var(--line);background:rgba(255,249,236,.92);border-radius:999px;padding:8px 11px;color:#816F61;font-size:12px;display:flex;gap:7px;align-items:center}
-    .chip.active{background:linear-gradient(145deg,rgba(126,167,206,.18),rgba(199,154,82,.12));color:#5B5149;border-color:rgba(103,142,186,.25)}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin:8px 2px 8px}
-    .section-title h3{font-size:13px;color:#7f6452;margin:0}
-    .section-title button{border:0;background:none;color:var(--mint);font-size:12px}
-    .cards{display:grid;gap:10px}
-    .card{position:relative;background:linear-gradient(165deg,#FFF9EC,#F5E8D5);border:1px solid var(--line);border-radius:20px;padding:13px;box-shadow:0 10px 28px rgba(121,91,58,.10)}
-    .card:active{transform:scale(.995)}
-    .cardtop{display:flex;align-items:flex-start;gap:10px}
-    .type{width:38px;height:38px;border-radius:12px;background:rgba(126,167,206,.13);display:grid;place-items:center;flex:none;font-size:17px;color:#557BA5}
-    .cardmain{min-width:0;flex:1}
-    .titleline{display:flex;align-items:center;gap:6px}
-    .title{font-size:14px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;color:#5E4A3F}
-    .pin{font-size:11px;color:var(--warning)}
-    .preview{font-size:13px;line-height:1.6;color:#8c7567;margin-top:5px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word;direction:auto;text-align:start}
-    .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:10.5px}
-    .crumb{background:rgba(255,247,239,.9);padding:5px 8px;border-radius:999px;white-space:nowrap;max-width:68%;overflow:hidden;text-overflow:ellipsis}
-    .tag{color:#557BA5;background:rgba(126,167,206,.12);padding:5px 7px;border-radius:999px}
-    .actions{display:flex;gap:6px;margin-top:11px}
-    .action{border:1px solid var(--line);background:rgba(255,249,242,.92);border-radius:11px;padding:8px 10px;font-size:11px;color:#6d574a}
-    .action.primary{background:rgba(126,167,206,.15);color:#557BA5;border-color:rgba(103,142,186,.18);font-weight:700}
-    .action.danger{color:#ff97a5}
-    .empty{padding:34px 20px;text-align:center;color:var(--muted);border:1px dashed rgba(133,103,82,.18);border-radius:22px;margin-top:6px;background:rgba(255,249,242,.55)}
-    .empty b{display:block;color:#6a564a;margin-bottom:5px}
-    .bottom{
-      position:absolute;bottom:0;left:0;right:0;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px);
-      background:linear-gradient(180deg,rgba(247,238,220,0),rgba(247,238,220,.96) 28%,rgba(247,238,220,1));
-      display:grid;grid-template-columns:repeat(5,1fr);z-index:10
-    }
-    .navbtn{border:0;background:transparent;color:#aa907d;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 3px;font-size:10px}
-    .navbtn.active{color:#557BA5}
-    .navico{font-size:18px;height:20px}
-    .addfab{width:50px;height:50px;border-radius:17px;border:0;background:linear-gradient(145deg,#D7B36D,#C79A52 55%,#A88248);color:#fffaf1;font-size:28px;font-weight:300;box-shadow:0 12px 28px rgba(171,128,63,.24);margin-top:-15px}
-    .overlay{position:absolute;inset:0;background:rgba(111,87,70,.18);backdrop-filter:blur(8px);z-index:30;opacity:0;pointer-events:none;transition:.18s}
-    .overlay.show{opacity:1;pointer-events:auto}
-    .sheet{position:absolute;z-index:31;left:0;right:0;bottom:0;max-height:91dvh;background:linear-gradient(180deg,#FFF9EC,#F3E6D2);border-radius:28px 28px 0 0;border:1px solid var(--line);box-shadow:var(--shadow);transform:translateY(105%);transition:.26s cubic-bezier(.2,.8,.2,1);overflow:hidden}
-    .sheet.show{transform:translateY(0)}
-    .grab{width:42px;height:4px;background:rgba(133,103,82,.22);border-radius:999px;margin:8px auto 4px}
-    .sheethead{padding:10px 16px 8px;display:flex;align-items:center;justify-content:space-between}
-    .sheethead h3{margin:0;font-size:18px;color:#6B5649}
-    .close{border:0;background:rgba(255,249,242,.96);width:34px;height:34px;border-radius:11px;box-shadow:0 6px 18px rgba(141,109,84,.08)}
-    .sheetbody{padding:6px 16px calc(env(safe-area-inset-bottom) + 22px);overflow-y:auto;max-height:calc(91dvh - 58px);overscroll-behavior:none;touch-action:pan-y}
-    .field{margin:11px 0}
-    .label{font-size:11px;color:#9a7f6e;margin:0 2px 6px;display:block}
-    .input,.textarea,.select{width:100%;border:1px solid var(--line);background:rgba(255,249,242,.94);color:var(--text);border-radius:15px;padding:12px 13px;outline:none}
-    .input:focus,.textarea:focus,.select:focus{border-color:rgba(110,231,216,.38)}
-    .textarea{min-height:120px;resize:vertical;line-height:1.7;direction:auto;text-align:start}
-    .select option{color:#3f3028}
-    .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-    .submit{width:100%;border:0;border-radius:16px;padding:13px 16px;margin-top:8px;background:linear-gradient(145deg,#84ADD3,#678EBA 55%,#587EA8);color:#fff;font-weight:800}
-    .ghost{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin-top:8px;background:rgba(255,249,242,.92);color:#6b5649}
-    .category-tree{display:grid;gap:7px}
-    .catrow{display:flex;align-items:center;gap:8px;background:rgba(255,249,242,.92);border:1px solid var(--line);padding:9px 10px;border-radius:14px}
-    .catrow .name{flex:1;font-size:13px}
-    .dot{width:9px;height:9px;border-radius:50%;background:var(--mint)}
-    .mini{border:0;background:rgba(255,244,236,.96);border-radius:9px;padding:6px 8px;font-size:11px;color:#785f50}
-    .settings-card{background:rgba(255,249,242,.9);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:10px}
-    .settings-card h4{margin:0 0 5px;font-size:13px}
-    .settings-card p{margin:0 0 10px;color:var(--muted);font-size:11px;line-height:1.7}
-    .toast{position:absolute;z-index:90;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translate(-50%,20px);background:#FFF4EA;color:#7C543E;padding:10px 13px;border-radius:13px;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:.2s;white-space:nowrap;box-shadow:0 12px 30px rgba(124,92,68,.18)}
-    .toast.show{opacity:1;transform:translate(-50%,0)}
-    .install-banner{display:none;margin:7px 0 10px;padding:11px 12px;border-radius:16px;background:linear-gradient(145deg,rgba(126,167,206,.12),rgba(199,154,82,.10));border:1px solid rgba(103,142,186,.18);font-size:11px;color:#756658;line-height:1.65}
-    .install-banner button{margin-top:8px;border:0;background:#678EBA;color:#fff;border-radius:10px;padding:7px 10px;font-weight:800}
-    @media (min-width:700px){
-      .app{max-width:540px;margin:auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
-      body{background:#efe4d7}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#F8F0DF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ClipNest">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<title>ClipNest — محفوظاتي</title>
+<style>
+:root{
+  --bg:#F8F0DF;--bg2:#F3E7D0;--paper:#FFF9ED;--paper2:#FBF2E3;--ink:#584536;--muted:#A08C78;
+  --blue:#6E9FD0;--blue-deep:#4E7FAF;--taupe:#A88974;--taupe-deep:#806451;--gold:#C99A4B;--gold2:#DAB56D;
+  --line:rgba(102,77,56,.14);--shadow:0 18px 46px rgba(117,84,50,.11);--danger:#B96C69;--nav-h:76px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;background:#EEE2CB;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Arabic","Segoe UI",Tahoma,Arial,sans-serif}
+body{position:fixed;inset:0;overscroll-behavior:none}
+button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}
+.app{position:relative;width:100%;height:100dvh;max-width:620px;margin:auto;overflow:hidden;background:
+ radial-gradient(circle at 12% -3%,rgba(218,181,109,.22),transparent 31%),
+ radial-gradient(circle at 94% 7%,rgba(110,159,208,.11),transparent 30%),
+ linear-gradient(180deg,#FCF6E9 0%,#F8EFDE 52%,#F7EDDB 100%);display:flex;flex-direction:column}
+.top{position:relative;z-index:10;flex:none;padding:calc(env(safe-area-inset-top) + 10px) 15px 7px;background:linear-gradient(180deg,rgba(252,246,233,.99) 0%,rgba(252,246,233,.93) 72%,rgba(252,246,233,0) 100%)}
+.brandrow{height:54px;display:flex;direction:ltr;align-items:center;justify-content:space-between}
+.brand{direction:rtl;display:flex;align-items:center;gap:10px;text-align:right}.brandlogo{width:43px;height:43px;border-radius:13px;object-fit:cover;display:block;box-shadow:0 7px 18px rgba(100,74,45,.15)}
+.brand h1{margin:0;font-size:22px;line-height:1;font-weight:790;letter-spacing:-.3px;color:#5B4638}.brand p{margin:5px 0 0;font-size:11.5px;color:#9C8976}
+.menu-btn{width:41px;height:41px;border-radius:14px;border:1px solid var(--line);background:rgba(255,250,239,.88);box-shadow:0 8px 20px rgba(121,91,58,.07);font-size:21px;line-height:1;display:grid;place-items:center;color:#765F4F}
+.searchbar{height:52px;display:grid;grid-template-columns:24px minmax(0,1fr) auto;direction:rtl;align-items:center;gap:8px;padding:0 10px 0 8px;border:1px solid var(--line);border-radius:21px;background:rgba(255,250,240,.93);box-shadow:0 12px 30px rgba(119,86,50,.08);backdrop-filter:blur(16px)}
+.searchbar svg{color:#AE9884}.searchbar input{border:0;outline:0;background:transparent;font-size:15px;min-width:0;text-align:right}.searchbar input::placeholder{color:#B39B87}
+.pastebtn{border:0;border-radius:13px;background:rgba(110,159,208,.15);color:var(--blue-deep);padding:8px 13px;font-size:12px;font-weight:760}
+.typefilters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:10px 0 2px;touch-action:pan-x}.typefilters::-webkit-scrollbar{display:none}
+.typechip{flex:none;height:37px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,249,238,.84);font-size:12px;color:#786553;display:flex;align-items:center;gap:6px;white-space:nowrap}.typechip.active{background:var(--blue);border-color:transparent;color:#fff;box-shadow:0 7px 16px rgba(78,127,175,.16)}
+.content{flex:1;min-height:0;height:auto;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:8px 15px calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);scrollbar-width:none}.content::-webkit-scrollbar{display:none}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;margin:5px 2px 10px;gap:12px}.view-title h2{font-size:27px;line-height:1.1;margin:0;font-weight:800;letter-spacing:-.4px;color:#604939}.view-title p{margin:6px 0 0;font-size:12px;color:#9C8976}.count{display:inline-flex;margin-top:7px;border:1px solid var(--line);background:rgba(255,249,239,.77);border-radius:999px;padding:6px 11px;font-size:11px;color:#9A8673}
+.view-controls{direction:ltr;display:flex;align-items:center;gap:7px}.sortbtn{height:36px;border:0;background:transparent;color:var(--blue-deep);font-size:12px;padding:0 4px;white-space:nowrap}.seg{height:36px;padding:3px;border:1px solid var(--line);background:rgba(255,250,240,.85);border-radius:12px;display:flex}.seg button{width:33px;border:0;border-radius:9px;background:transparent;color:#A38E7B;display:grid;place-items:center}.seg button.active{background:#FFFDF6;box-shadow:0 4px 10px rgba(117,84,50,.09);color:#65503F}
+.cards{display:grid;grid-template-columns:1fr;gap:10px}.cards.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cards.grid .actions{flex-wrap:wrap}.cards.grid .preview{-webkit-line-clamp:3}.cards.grid .crumb{max-width:100%}
+.card{border:1px solid var(--line);background:linear-gradient(155deg,rgba(255,251,242,.96),rgba(250,239,222,.96));border-radius:20px;padding:13px;box-shadow:0 9px 24px rgba(117,84,50,.07)}.cardtop{display:flex;align-items:flex-start;gap:10px}.typeicon{width:38px;height:38px;flex:none;border-radius:12px;background:rgba(110,159,208,.13);color:var(--blue-deep);display:grid;place-items:center;font-weight:800}.cardmain{min-width:0;flex:1}.titleline{display:flex;align-items:center;gap:7px}.title{font-weight:780;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pin{font-size:9px;color:var(--gold)}.preview{font-size:12.8px;line-height:1.65;color:#8B7564;margin-top:5px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word;direction:auto;text-align:start}.meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:9px;font-size:10px;color:#A08C78}.crumb,.tag{padding:5px 7px;border-radius:999px;background:rgba(168,137,116,.08)}.crumb{max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tag{color:#527EAA;background:rgba(110,159,208,.11)}.actions{display:flex;gap:6px;margin-top:10px}.action{border:1px solid var(--line);background:rgba(255,250,240,.84);border-radius:10px;padding:7px 9px;font-size:10.5px}.action.primary{background:rgba(110,159,208,.14);border-color:rgba(78,127,175,.14);color:var(--blue-deep);font-weight:760}.action.danger{color:var(--danger)}
+.empty{min-height:224px;border:1px dashed rgba(121,91,58,.18);border-radius:25px;background:rgba(255,251,243,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#A18C78;padding:28px 20px}.empty svg{color:#B7A28E;margin-bottom:13px}.empty b{font-size:18px;color:#6D5646;margin-bottom:8px}.empty span{font-size:13px;line-height:1.8}
+.cat-toolbar{display:flex;align-items:center;justify-content:space-between;margin:3px 1px 12px}.cat-toolbar button{border:1px solid var(--line);background:rgba(255,250,240,.86);border-radius:13px;padding:9px 11px;font-size:11.5px}.cat-breadcrumb{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:11px}.crumbbtn{flex:none;border:0;background:transparent;color:var(--blue-deep);font-size:11px;padding:3px}.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.category-box{min-height:91px;border:1px solid var(--line);border-radius:19px;background:linear-gradient(150deg,rgba(255,250,239,.94),rgba(248,235,216,.88));padding:12px;text-align:right;box-shadow:0 7px 18px rgba(117,84,50,.06)}.category-box .cat-ico{width:34px;height:34px;border-radius:11px;background:rgba(201,154,75,.12);display:grid;place-items:center;margin-bottom:8px;color:#A77934;font-size:18px}.category-box strong{font-size:13px;display:block}.category-box small{display:block;margin-top:4px;color:#A08C78;font-size:10px}
+.settings-wrap{display:grid;gap:10px}.settings-card{border:1px solid var(--line);border-radius:20px;background:rgba(255,250,240,.85);padding:14px;box-shadow:0 7px 20px rgba(117,84,50,.05)}.settings-card h3{font-size:14px;margin:0 0 5px}.settings-card p{font-size:11.5px;line-height:1.7;color:#9B8775;margin:0 0 10px}.widebtn{width:100%;border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#FFF9ED;margin-top:7px;font-size:12px}.widebtn.primary{background:rgba(110,159,208,.14);color:var(--blue-deep);font-weight:760}.version{padding:24px 0 8px;text-align:center;color:#A49180;font-size:10px}.version strong{display:block;color:#6B91B9;font-size:11px;margin-bottom:4px}
+.bottomnav{position:absolute;z-index:20;left:0;right:0;bottom:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding:5px 9px max(7px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);align-items:start;background:rgba(251,244,231,.94);border-top:1px solid rgba(109,83,60,.10);box-shadow:0 -10px 34px rgba(117,84,50,.055);backdrop-filter:blur(18px)}
+.navbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:7px 1px 0;color:#A58D79;font-size:10px;min-width:0}.navbtn svg{width:20px;height:20px}.navbtn.active{color:var(--blue-deep)}.addnav{padding-top:0;color:#947037}.addcircle{width:53px;height:53px;margin-top:-18px;border-radius:18px;background:linear-gradient(145deg,var(--gold2),var(--gold));display:grid;place-items:center;color:white;font-size:30px;font-weight:300;box-shadow:0 10px 23px rgba(172,126,52,.23);border:1px solid rgba(255,255,255,.6)}.addnav span:last-child{margin-top:-1px}
+.overlay{position:absolute;inset:0;z-index:40;background:rgba(91,67,48,.17);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:.18s}.overlay.show{opacity:1;pointer-events:auto}.sheet{position:absolute;z-index:41;left:0;right:0;bottom:0;max-height:90dvh;transform:translateY(105%);transition:.25s cubic-bezier(.2,.8,.2,1);background:linear-gradient(180deg,#FFF9ED,#F8ECD9);border-radius:28px 28px 0 0;border:1px solid var(--line);box-shadow:0 -18px 60px rgba(92,67,45,.18);overflow:hidden}.sheet.show{transform:translateY(0)}.grab{width:43px;height:4px;border-radius:999px;background:rgba(112,86,63,.19);margin:8px auto 3px}.sheethead{height:49px;padding:6px 15px;display:flex;align-items:center;justify-content:space-between}.sheethead h3{margin:0;font-size:17px}.close{border:0;width:34px;height:34px;border-radius:11px;background:rgba(255,251,242,.86)}.sheetbody{max-height:calc(90dvh - 55px);overflow-y:auto;overscroll-behavior:contain;padding:4px 15px calc(env(safe-area-inset-bottom) + 18px)}.field{margin:11px 0}.label{display:block;font-size:11px;color:#9B8674;margin:0 2px 6px}.input,.textarea,.select{width:100%;border:1px solid var(--line);border-radius:15px;background:rgba(255,251,243,.89);padding:12px 13px;outline:0}.textarea{min-height:118px;resize:vertical;line-height:1.7;direction:auto;text-align:start}.input:focus,.textarea:focus,.select:focus{border-color:rgba(78,127,175,.38)}.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.submit{width:100%;border:0;border-radius:15px;padding:13px;background:linear-gradient(145deg,#7EABD5,#5F8FBE);color:#fff;font-weight:800;margin-top:7px}.ghost{width:100%;border:1px solid var(--line);border-radius:15px;padding:11px;background:rgba(255,250,240,.88);margin-top:7px}.category-tree{display:grid;gap:7px}.catrow{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(255,250,240,.85);border-radius:14px;padding:8px}.catrow .name{flex:1;border:0;background:transparent;text-align:right;font-size:12px}.dot{width:9px;height:9px;border-radius:50%;background:var(--blue)}.mini{border:0;background:rgba(243,232,214,.88);border-radius:9px;padding:6px 7px;font-size:10px}.toast{position:absolute;z-index:90;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);transform:translate(-50%,15px);opacity:0;pointer-events:none;transition:.2s;background:#FFF8EA;color:#6D503B;border:1px solid var(--line);box-shadow:0 10px 28px rgba(92,67,45,.16);padding:9px 12px;border-radius:12px;font-size:11px;font-weight:760;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:360px){.brand h1{font-size:19px}.typechip{padding:0 10px}.view-title h2{font-size:24px}.category-grid{grid-template-columns:1fr}}
+@media(min-width:700px){body{background:#E9DDC7}.app{border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:0 0 60px rgba(105,76,47,.10)}}
+</style>
 </head>
 <body>
 <div class="app" id="app">
-  <header class="top">
-    <div class="brandrow">
-      <div class="brand">
-        <img src="./icon-192.png" alt="ClipNest" class="brandlogo">
-        <div><h1>ClipNest</h1><p>كل ما تحتاجه، محفوظ في مكانه.</p></div>
-      </div>
-      <button class="roundbtn" id="quickMenu" aria-label="خيارات">•••</button>
-    </div>
-    <div class="searchbar">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.4-4.4m2.4-5.1A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="search" type="search" placeholder="ابحث في كل محفوظاتك…" autocomplete="off" />
-      <button class="pastebtn" id="pasteBtn">لصق</button>
-    </div>
-  </header>
-
-  <main class="content" id="content">
-    <div class="install-banner" id="installBanner"><span id="installText"></span><br><button id="installBtn">تثبيت التطبيق</button></div>
-    <div class="hero">
-      <div><h2 id="viewTitle">المحفوظات</h2><div class="sub" id="viewSub">روابط، نصوص ومعلوماتك المهمة</div></div>
-      <div class="count" id="count">0 عنصر</div>
-    </div>
-    <div class="chips" id="chips"></div>
-    <div class="section-title"><h3 id="sectionTitle">الأحدث</h3><button id="sortBtn">الأحدث ↓</button></div>
-    <div class="cards" id="cards"></div>
-  </main>
-
-  <nav class="bottom">
-    <button class="navbtn active" data-view="all"><span class="navico">⌂</span><span>الكل</span></button>
-    <button class="navbtn" data-view="categories"><span class="navico">◫</span><span>التصنيفات</span></button>
-    <button class="navbtn" id="addNav"><span class="addfab">+</span><span>إضافة</span></button>
-    <button class="navbtn" data-view="favorites"><span class="navico">☆</span><span>المفضلة</span></button>
-    <button class="navbtn" data-view="settings"><span class="navico">⚙</span><span>الإعدادات</span></button>
-  </nav>
-
-  <div class="overlay" id="overlay"></div>
-
-  <section class="sheet" id="itemSheet" aria-modal="true">
-    <div class="grab"></div>
-    <div class="sheethead"><h3 id="itemSheetTitle">إضافة محفوظ جديد</h3><button class="close" data-close>✕</button></div>
-    <div class="sheetbody">
-      <input type="hidden" id="itemId">
-      <div class="field"><label class="label">العنوان <span style="color:#66758d">(اختياري)</span></label><input class="input" id="itemTitle" placeholder="مثال: رابط لوحة التحكم"></div>
-      <div class="field"><label class="label">المحتوى</label><textarea class="textarea" id="itemContent" placeholder="الصق رابطًا، جملة، كودًا أو أي معلومة…"></textarea></div>
-      <div class="field"><label class="label">التصنيف</label><select class="select" id="itemCategory"></select></div>
-      <div class="field"><label class="label">وسوم — افصل بينها بفاصلة</label><input class="input" id="itemTags" placeholder="مهم، عمل، لاحقًا"></div>
-      <div class="row2">
-        <button class="ghost" id="favoriteToggle">☆ إضافة للمفضلة</button>
-        <button class="ghost" id="pinToggle">⌁ تثبيت بالأعلى</button>
-      </div>
-      <button class="submit" id="saveItem">حفظ فورًا</button>
-    </div>
-  </section>
-
-  <section class="sheet" id="categorySheet">
-    <div class="grab"></div>
-    <div class="sheethead"><h3>إدارة التصنيفات</h3><button class="close" data-close>✕</button></div>
-    <div class="sheetbody">
-      <div class="category-tree" id="categoryTree"></div>
-      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
-      <div class="field"><label class="label">اسم التصنيف الجديد</label><input class="input" id="catName" placeholder="مثال: مطاعم"></div>
-      <div class="field"><label class="label">داخل تصنيف</label><select class="select" id="catParent"></select></div>
-      <button class="submit" id="addCategory">إضافة التصنيف</button>
-    </div>
-  </section>
-
-  <section class="sheet" id="settingsSheet">
-    <div class="grab"></div>
-    <div class="sheethead"><h3>الإعدادات والنسخ الاحتياطي</h3><button class="close" data-close>✕</button></div>
-    <div class="sheetbody">
-      <div class="settings-card"><h4>نسخة احتياطية</h4><p>نزّل ملفًا واحدًا يحتوي على المحفوظات والتصنيفات ثم استعده على جهاز آخر عند الحاجة.</p><button class="ghost" id="exportBtn">تصدير نسخة JSON</button><button class="ghost" id="importBtn">استيراد نسخة</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
-      <div class="settings-card"><h4>تثبيت كتطبيق</h4><p id="installHelp">يمكن تشغيل ClipNest بوضع مستقل من الشاشة الرئيسية.</p><button class="ghost" id="manualInstall">طريقة التثبيت</button></div>
-      <div class="settings-card"><h4>إعادة ضبط</h4><p>يحذف جميع المحفوظات والتصنيفات من هذا الجهاز فقط.</p><button class="ghost" id="clearBtn" style="color:#ff8fa0">حذف جميع البيانات</button></div>
-      <div style="text-align:center;color:#65758d;font-size:10px;margin:18px 0 4px">ClipNest v1.2.0 • Offline-first PWA</div>
-    </div>
-  </section>
-
-  <div class="toast" id="toast">تم</div>
+<header class="top">
+  <div class="brandrow">
+    <button class="menu-btn" id="menuBtn" aria-label="الإعدادات">•••</button>
+    <div class="brand"><img src="./icon-192.png" class="brandlogo" alt="ClipNest"><div><h1>ClipNest</h1><p>كل ما تحتاجه، محفوظ في مكانه.</p></div></div>
+  </div>
+  <div class="searchbar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.4-4.4m2.4-5.1A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input id="search" type="search" placeholder="إبحث في كل محفوظاتك…" autocomplete="off">
+    <button class="pastebtn" id="pasteBtn">لصق</button>
+  </div>
+  <div class="typefilters" id="typeFilters"></div>
+</header>
+<main class="content" id="content"><div id="mainArea"></div></main>
+<nav class="bottomnav" id="bottomNav">
+  <button class="navbtn active" data-view="all"><svg viewBox="0 0 24 24" fill="none"><path d="M4 10.5 12 4l8 6.5V20H5v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>الكل</span></button>
+  <button class="navbtn" data-view="categories"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="4" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="14" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.8"/></svg><span>التصنيفات</span></button>
+  <button class="navbtn addnav" id="addNav"><span class="addcircle">＋</span><span>إضافة</span></button>
+  <button class="navbtn" data-view="favorites"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>المفضلة</span></button>
+  <button class="navbtn" data-view="settings"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8.3a3.7 3.7 0 1 0 0 7.4 3.7 3.7 0 0 0 0-7.4Z" stroke="currentColor" stroke-width="1.8"/><path d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.6l1-1.8-2.1-2.1-1.8 1a7 7 0 0 0-1.6-.7L11.2 3h-3l-.6 1.7a7 7 0 0 0-1.6.7l-1.8-1L2.1 6.5l1 1.8a7 7 0 0 0-.7 1.6l-1.7.6v3l1.7.6c.2.6.4 1.1.7 1.6l-1 1.8 2.1 2.1 1.8-1c.5.3 1 .5 1.6.7l.6 1.7h3l.6-1.7c.6-.2 1.1-.4 1.6-.7l1.8 1 2.1-2.1-1-1.8c.3-.5.5-1 .7-1.6l2-.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" transform="translate(2.1 0) scale(.82)"/></svg><span>الإعدادات</span></button>
+</nav>
+<div class="overlay" id="overlay"></div>
+<section class="sheet" id="itemSheet"><div class="grab"></div><div class="sheethead"><h3 id="itemSheetTitle">إضافة محفوظ جديد</h3><button class="close" data-close>✕</button></div><div class="sheetbody">
+  <input type="hidden" id="itemId"><div class="field"><label class="label">العنوان <span style="opacity:.65">(اختياري)</span></label><input class="input" id="itemTitle" placeholder="مثال: رابط لوحة التحكم"></div>
+  <div class="field"><label class="label">المحتوى</label><textarea class="textarea" id="itemContent" placeholder="الصق رابطًا، جملة، كودًا أو أي معلومة…"></textarea></div>
+  <div class="field"><label class="label">التصنيف</label><select class="select" id="itemCategory"></select></div>
+  <div class="field"><label class="label">وسوم — افصل بينها بفاصلة</label><input class="input" id="itemTags" placeholder="مهم، عمل، لاحقًا"></div>
+  <div class="row2"><button class="ghost" id="favoriteToggle">☆ إضافة للمفضلة</button><button class="ghost" id="pinToggle">⌁ تثبيت بالأعلى</button></div><button class="submit" id="saveItem">حفظ</button>
+</div></section>
+<section class="sheet" id="categorySheet"><div class="grab"></div><div class="sheethead"><h3>إدارة التصنيفات</h3><button class="close" data-close>✕</button></div><div class="sheetbody">
+  <div class="category-tree" id="categoryTree"></div><hr style="border:0;border-top:1px solid var(--line);margin:15px 0">
+  <div class="field"><label class="label">اسم التصنيف الجديد</label><input class="input" id="catName" placeholder="مثال: أبوظبي"></div>
+  <div class="field"><label class="label">داخل تصنيف</label><select class="select" id="catParent"></select></div><button class="submit" id="addCategory">إضافة التصنيف</button>
+</div></section>
+<div class="toast" id="toast">تم</div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
 </div>
 <script>
-(() => {
-  'use strict';
-  const DB_NAME='clipnestDB', DB_VERSION=1;
-  let db, items=[], categories=[], currentView='all', currentCategory=null, sortNewest=true;
-  let editFavorite=false, editPinned=false, deferredPrompt=null;
-
-  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-  const uid=()=> (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
-  const now=()=>new Date().toISOString();
-  const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  const toast=(msg)=>{const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),1400)};
-
-  // Strongly reduce browser-like gestures while retaining app's own vertical scroll.
-  ['gesturestart','gesturechange','gestureend'].forEach(evt=>document.addEventListener(evt,e=>e.preventDefault(),{passive:false}));
-  document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
-
-  function openDB(){
-    return new Promise((resolve,reject)=>{
-      const r=indexedDB.open(DB_NAME,DB_VERSION);
-      r.onupgradeneeded=e=>{
-        const d=e.target.result;
-        if(!d.objectStoreNames.contains('items')) d.createObjectStore('items',{keyPath:'id'});
-        if(!d.objectStoreNames.contains('categories')) d.createObjectStore('categories',{keyPath:'id'});
-      };
-      r.onsuccess=()=>{db=r.result;resolve(db)}; r.onerror=()=>reject(r.error);
-    });
-  }
-  function store(name,mode='readonly'){return db.transaction(name,mode).objectStore(name)}
-  function getAll(name){return new Promise((res,rej)=>{const r=store(name).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
-  function put(name,val){return new Promise((res,rej)=>{const r=store(name,'readwrite').put(val);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
-  function del(name,id){return new Promise((res,rej)=>{const r=store(name,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
-  function clearStore(name){return new Promise((res,rej)=>{const r=store(name,'readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
-
-  async function seed(){
-    categories=await getAll('categories');
-    if(categories.length) return;
-    const a={id:uid(),name:'العمل',parentId:null,color:'#678EBA',createdAt:now()};
-    const b={id:uid(),name:'شخصي',parentId:null,color:'#7EA7CE',createdAt:now()};
-    const c={id:uid(),name:'أكل',parentId:null,color:'#C79A52',createdAt:now()};
-    const d={id:uid(),name:'مطاعم',parentId:c.id,color:'#C79A52',createdAt:now()};
-    const e={id:uid(),name:'كوفيات',parentId:c.id,color:'#C79A52',createdAt:now()};
-    for(const x of [a,b,c,d,e]) await put('categories',x);
-  }
-
-  function childrenOf(id){return categories.filter(c=>c.parentId===id)}
-  function descendants(id){
-    let out=[]; for(const c of childrenOf(id)){out.push(c.id,...descendants(c.id))} return out;
-  }
-  function catById(id){return categories.find(c=>c.id===id)}
-  function pathFor(id){
-    if(!id) return 'غير مصنف';
-    const p=[]; let c=catById(id), guard=0;
-    while(c && guard++<30){p.unshift(c.name);c=catById(c.parentId)}
-    return p.join(' › ');
-  }
-  function renderCatOptions(select, allowNone=true){
-    const make=(parent=null,level=0)=>{
-      let html='';
-      for(const c of categories.filter(x=>x.parentId===parent).sort((a,b)=>a.name.localeCompare(b.name,'ar'))){
-        html+=`<option value="${c.id}">${'— '.repeat(level)}${escapeHTML(c.name)}</option>`;
-        html+=make(c.id,level+1);
-      }
-      return html;
-    }
-    select.innerHTML=(allowNone?'<option value="">غير مصنف</option>':'<option value="">بدون تصنيف أب</option>')+make();
-  }
-  function renderTree(){
-    const box=$('#categoryTree');
-    const row=(c,level)=>`
-      <div class="catrow" style="margin-right:${level*13}px">
-        <span class="dot" style="background:${c.color||'#6ee7d8'}"></span>
-        <button class="name" style="border:0;background:none;text-align:right;color:white" data-open-cat="${c.id}">${escapeHTML(c.name)} <small style="color:#67768b">(${countForCategory(c.id)})</small></button>
-        <button class="mini" data-add-child="${c.id}">+ فرعي</button>
-        <button class="mini" data-del-cat="${c.id}" style="color:#ff8fa0">حذف</button>
-      </div>`;
-    const walk=(parent=null,level=0)=>categories.filter(c=>c.parentId===parent).sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(c=>row(c,level)+walk(c.id,level+1)).join('');
-    box.innerHTML=walk()||'<div class="empty"><b>لا توجد تصنيفات بعد</b>أنشئ أول تصنيف من الأسفل.</div>';
-  }
-  function countForCategory(id){
-    const ids=[id,...descendants(id)];
-    return items.filter(i=>ids.includes(i.categoryId)).length;
-  }
-
-  function detectType(content){
-    const s=(content||'').trim();
-    if(/^https?:\/\/\S+$/i.test(s)) return 'link';
-    if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'email';
-    if(/^[+\d][\d\s()-]{6,}$/.test(s)) return 'phone';
-    if((s.includes('{')&&s.includes('}')) || /<\/?[a-z][\s\S]*>/i.test(s) || /\b(const|let|function|SELECT|INSERT|class)\b/.test(s)) return 'code';
-    return 'text';
-  }
-  function typeIcon(t){return ({link:'↗',email:'@',phone:'☎',code:'⌘',text:'≡'})[t]||'≡'}
-  function typeLabel(t){return ({link:'رابط',email:'بريد',phone:'رقم',code:'كود',text:'نص'})[t]||'نص'}
-  function autoTitle(content,type){
-    const s=(content||'').trim();
-    if(type==='link'){try{const u=new URL(s);return u.hostname.replace(/^www\./,'')}catch(e){}}
-    if(type==='email') return s.split('@')[1]||'بريد إلكتروني';
-    const first=s.split(/\n/)[0].trim();
-    return first.slice(0,48) || 'محفوظ جديد';
-  }
-  function fmtDate(iso){
-    const d=new Date(iso); const nowd=new Date(); const diff=(nowd-d)/864e5;
-    if(diff<1 && nowd.getDate()===d.getDate()) return 'اليوم';
-    if(diff<2) return 'أمس';
-    return d.toLocaleDateString('ar-AE',{day:'numeric',month:'short'});
-  }
-
-  function filteredItems(){
-    let arr=[...items];
-    const q=$('#search').value.trim().toLowerCase();
-    if(currentView==='favorites') arr=arr.filter(i=>i.favorite);
-    if(currentCategory){
-      const ids=[currentCategory,...descendants(currentCategory)];
-      arr=arr.filter(i=>ids.includes(i.categoryId));
-    }
-    if(q){
-      arr=arr.filter(i=>[i.title,i.content,(i.tags||[]).join(' '),pathFor(i.categoryId),typeLabel(i.type)]
-        .join(' ').toLowerCase().includes(q));
-    }
-    arr.sort((a,b)=>{
-      if(!!a.pinned!==!!b.pinned) return a.pinned?-1:1;
-      const av=new Date(a.updatedAt||a.createdAt), bv=new Date(b.updatedAt||b.createdAt);
-      return sortNewest ? bv-av : av-bv;
-    });
-    return arr;
-  }
-  function renderChips(){
-    const roots=categories.filter(c=>!c.parentId);
-    $('#chips').innerHTML=
-      `<button class="chip ${!currentCategory?'active':''}" data-chip="">الكل</button>`+
-      roots.map(c=>`<button class="chip ${currentCategory===c.id?'active':''}" data-chip="${c.id}"><span class="dot" style="background:${c.color||'#6ee7d8'}"></span>${escapeHTML(c.name)} <span style="opacity:.55">${countForCategory(c.id)}</span></button>`).join('')+
-      `<button class="chip" id="manageCats">＋ تصنيف</button>`;
-  }
-  function renderCards(){
-    const arr=filteredItems();
-    $('#count').textContent=`${arr.length} عنصر`;
-    const box=$('#cards');
-    if(!arr.length){box.innerHTML=`<div class="empty"><b>لا توجد نتائج</b>${$('#search').value?'جرّب كلمة أخرى أو غيّر التصنيف.':'اضغط + لإضافة أول محفوظ.'}</div>`;return}
-    box.innerHTML=arr.map(i=>`
-      <article class="card" data-id="${i.id}">
-        <div class="cardtop">
-          <div class="type">${typeIcon(i.type)}</div>
-          <div class="cardmain">
-            <div class="titleline"><div class="title">${escapeHTML(i.title||autoTitle(i.content,i.type))}</div>${i.pinned?'<span class="pin">مثبّت</span>':''}</div>
-            <div class="preview">${escapeHTML(i.content)}</div>
-            <div class="meta">
-              <span class="crumb">${escapeHTML(pathFor(i.categoryId))}</span>
-              ${(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHTML(t)}</span>`).join('')}
-              <span>${fmtDate(i.updatedAt||i.createdAt)}</span>
-            </div>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="action primary" data-copy="${i.id}">نسخ</button>
-          ${i.type==='link'?`<button class="action" data-open="${i.id}">فتح</button>`:''}
-          <button class="action" data-fav="${i.id}">${i.favorite?'★':'☆'}</button>
-          <button class="action" data-edit="${i.id}">تعديل</button>
-          <button class="action danger" data-delete="${i.id}">حذف</button>
-        </div>
-      </article>`).join('');
-  }
-  function renderHeader(){
-    if(currentView==='favorites'){
-      $('#viewTitle').textContent='المفضلة'; $('#viewSub').textContent='المحفوظات التي تريد الوصول إليها بسرعة';
-    }else if(currentCategory){
-      $('#viewTitle').textContent=catById(currentCategory)?.name||'التصنيف'; $('#viewSub').textContent=pathFor(currentCategory);
-    }else{
-      $('#viewTitle').textContent='المحفوظات'; $('#viewSub').textContent='روابط، نصوص ومعلوماتك المهمة';
-    }
-  }
-  function render(){renderHeader();renderChips();renderCards()}
-
-  function showSheet(id){
-    $('#overlay').classList.add('show'); $(id).classList.add('show');
-  }
-  function closeSheets(){
-    $('#overlay').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show'));
-  }
-
-  function openItem(item=null){
-    $('#itemId').value=item?.id||'';
-    $('#itemTitle').value=item?.title||'';
-    $('#itemContent').value=item?.content||'';
-    renderCatOptions($('#itemCategory'),true);
-    $('#itemCategory').value=item?.categoryId||currentCategory||'';
-    $('#itemTags').value=(item?.tags||[]).join('، ');
-    editFavorite=!!item?.favorite; editPinned=!!item?.pinned;
-    $('#favoriteToggle').textContent=(editFavorite?'★':'☆')+' '+(editFavorite?'في المفضلة':'إضافة للمفضلة');
-    $('#pinToggle').textContent=(editPinned?'⌁ مثبّت':'⌁ تثبيت بالأعلى');
-    $('#itemSheetTitle').textContent=item?'تعديل المحفوظ':'إضافة محفوظ جديد';
-    showSheet('#itemSheet');
-    setTimeout(()=>$('#itemContent').focus(),250);
-  }
-  async function saveItem(){
-    const content=$('#itemContent').value.trim();
-    if(!content){toast('اكتب أو الصق محتوى أولًا');return}
-    const id=$('#itemId').value||uid();
-    const old=items.find(i=>i.id===id);
-    const type=detectType(content);
-    const obj={
-      id, title:$('#itemTitle').value.trim()||autoTitle(content,type), content,
-      categoryId:$('#itemCategory').value||null,
-      tags:$('#itemTags').value.split(/[،,]/).map(x=>x.trim()).filter(Boolean),
-      type, favorite:editFavorite, pinned:editPinned,
-      createdAt:old?.createdAt||now(), updatedAt:now(), copyCount:old?.copyCount||0, copiedAt:old?.copiedAt||null
-    };
-    await put('items',obj); items=await getAll('items'); closeSheets(); render(); toast('تم الحفظ');
-  }
-  async function copyItem(id){
-    const i=items.find(x=>x.id===id); if(!i)return;
-    try{
-      await navigator.clipboard.writeText(i.content);
-    }catch(e){
-      const ta=document.createElement('textarea');ta.value=i.content;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
-    }
-    i.copyCount=(i.copyCount||0)+1;i.copiedAt=now();await put('items',i);toast('تم النسخ');
-  }
-  async function pasteFromClipboard(){
-    try{
-      const txt=await navigator.clipboard.readText();
-      if(!txt){toast('الحافظة فارغة');return}
-      openItem(); $('#itemContent').value=txt; $('#itemTitle').value=autoTitle(txt,detectType(txt));
-    }catch(e){
-      openItem(); toast('استخدم أمر لصق داخل خانة المحتوى');
-    }
-  }
-
-  async function addCategory(){
-    const name=$('#catName').value.trim(); if(!name){toast('اكتب اسم التصنيف');return}
-    const colors=['#7EA7CE','#678EBA','#C79A52','#A68A78','#D1B993','#8EA7B8'];
-    await put('categories',{id:uid(),name,parentId:$('#catParent').value||null,color:colors[categories.length%colors.length],createdAt:now()});
-    $('#catName').value=''; categories=await getAll('categories'); renderCatOptions($('#catParent'),false);renderTree();render();toast('تمت إضافة التصنيف');
-  }
-  async function deleteCategory(id){
-    if(countForCategory(id)>0){toast('انقل العناصر من التصنيف أولًا');return}
-    if(childrenOf(id).length){toast('احذف التصنيفات الفرعية أولًا');return}
-    if(confirm('حذف هذا التصنيف؟')){await del('categories',id);categories=await getAll('categories');if(currentCategory===id)currentCategory=null;render();renderTree();}
-  }
-
-  function openCategories(){
-    currentView='all';
-    renderTree();renderCatOptions($('#catParent'),false);showSheet('#categorySheet');
-  }
-  function openSettings(){showSheet('#settingsSheet')}
-
-  async function exportBackup(){
-    const data={app:'ClipNest',version:1,exportedAt:now(),categories,items};
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`clipnest-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);toast('تم إنشاء النسخة');
-  }
-  async function importBackup(file){
-    try{
-      const data=JSON.parse(await file.text());
-      if(!Array.isArray(data.items)||!Array.isArray(data.categories)) throw new Error();
-      for(const c of data.categories) await put('categories',c);
-      for(const i of data.items) await put('items',i);
-      categories=await getAll('categories');items=await getAll('items');render();toast('تم استيراد النسخة');
-    }catch(e){toast('ملف النسخة غير صالح')}
-  }
-
-  function setNav(view){
-    currentCategory=null;currentView=view;
-    $$('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-    if(view==='categories'){openCategories();return}
-    if(view==='settings'){openSettings();return}
-    render();
-  }
-
-  // Events
-  $('#overlay').addEventListener('click',closeSheets);
-  $$('[data-close]').forEach(b=>b.addEventListener('click',closeSheets));
-  $('#addNav').addEventListener('click',()=>openItem());
-  $('#pasteBtn').addEventListener('click',pasteFromClipboard);
-  $('#search').addEventListener('input',renderCards);
-  $('#saveItem').addEventListener('click',saveItem);
-  $('#favoriteToggle').addEventListener('click',()=>{editFavorite=!editFavorite;$('#favoriteToggle').textContent=(editFavorite?'★ في المفضلة':'☆ إضافة للمفضلة')});
-  $('#pinToggle').addEventListener('click',()=>{editPinned=!editPinned;$('#pinToggle').textContent=editPinned?'⌁ مثبّت':'⌁ تثبيت بالأعلى'});
-  $('#addCategory').addEventListener('click',addCategory);
-  $('#sortBtn').addEventListener('click',()=>{sortNewest=!sortNewest;$('#sortBtn').textContent=sortNewest?'الأحدث ↓':'الأقدم ↑';renderCards()});
-  $('#quickMenu').addEventListener('click',openSettings);
-  $$('[data-view]').forEach(b=>b.addEventListener('click',()=>setNav(b.dataset.view)));
-
-  $('#chips').addEventListener('click',e=>{
-    const chip=e.target.closest('[data-chip]');
-    if(chip){currentCategory=chip.dataset.chip||null;currentView='all';render()}
-    if(e.target.closest('#manageCats')) openCategories();
-  });
-  $('#cards').addEventListener('click',async e=>{
-    const id=e.target.closest('[data-copy],[data-open],[data-fav],[data-edit],[data-delete]')?.dataset;
-    if(!id)return;
-    if(id.copy) return copyItem(id.copy);
-    if(id.open){const i=items.find(x=>x.id===id.open);if(i&&i.type==='link') window.open(i.content,'_blank','noopener')}
-    if(id.fav){const i=items.find(x=>x.id===id.fav);i.favorite=!i.favorite;i.updatedAt=now();await put('items',i);items=await getAll('items');render();toast(i.favorite?'أضيف للمفضلة':'أزيل من المفضلة')}
-    if(id.edit){openItem(items.find(x=>x.id===id.edit))}
-    if(id.delete && confirm('حذف هذا المحفوظ؟')){await del('items',id.delete);items=await getAll('items');render();toast('تم الحذف')}
-  });
-  $('#categoryTree').addEventListener('click',e=>{
-    const oc=e.target.closest('[data-open-cat]'); if(oc){currentCategory=oc.dataset.openCat;closeSheets();render();return}
-    const ac=e.target.closest('[data-add-child]'); if(ac){renderCatOptions($('#catParent'),false);$('#catParent').value=ac.dataset.addChild;$('#catName').focus();return}
-    const dc=e.target.closest('[data-del-cat]'); if(dc) deleteCategory(dc.dataset.delCat);
-  });
-
-  $('#exportBtn').addEventListener('click',exportBackup);
-  $('#importBtn').addEventListener('click',()=>$('#importFile').click());
-  $('#importFile').addEventListener('change',e=>{if(e.target.files[0])importBackup(e.target.files[0]);e.target.value=''});
-  $('#clearBtn').addEventListener('click',async()=>{if(confirm('سيتم حذف جميع البيانات من هذا الجهاز. هل أنت متأكد؟')){await clearStore('items');await clearStore('categories');items=[];categories=[];await seed();categories=await getAll('categories');render();closeSheets();toast('تمت إعادة الضبط')}});
-
-  // PWA install UX
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBanner').style.display='block';$('#installText').textContent='يمكن تثبيت ClipNest كتطبيق مستقل على جهازك.'});
-  $('#installBtn').addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBanner').style.display='none'}else showInstallHelp()});
-  $('#manualInstall').addEventListener('click',showInstallHelp);
-  function showInstallHelp(){
-    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    alert(isiOS?'على iPhone: افتح الصفحة في المتصفح → زر المشاركة → إضافة إلى الشاشة الرئيسية. بعدها افتح ClipNest من الأيقونة.':'من قائمة المتصفح اختر تثبيت التطبيق أو Add to Home Screen.');
-  }
-
-  // Service worker
-  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-
-  // Init
-  (async()=>{
-    await openDB();await seed();categories=await getAll('categories');items=await getAll('items');
-    render();
-    if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches && !navigator.standalone){
-      $('#installBanner').style.display='block';
-      $('#installText').textContent='لأفضل تجربة: أضف ClipNest إلى الشاشة الرئيسية ليعمل كتطبيق مستقل.';
-      $('#installBtn').textContent='طريقة التثبيت';
-    }
-  })();
+(()=>{'use strict';
+const VERSION='1.3.0',DB_NAME='clipnestDB',DB_VERSION=1;
+let db,items=[],categories=[],currentView='all',currentCategory=null,currentType='all',viewMode='list',sortNewest=true,editFavorite=false,editPinned=false,deferredPrompt=null;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2),now=()=>new Date().toISOString();
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1400)}
+['gesturestart','gesturechange','gestureend'].forEach(x=>document.addEventListener(x,e=>e.preventDefault(),{passive:false}));document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('items'))d.createObjectStore('items',{keyPath:'id'});if(!d.objectStoreNames.contains('categories'))d.createObjectStore('categories',{keyPath:'id'})};r.onsuccess=()=>{db=r.result;res(db)};r.onerror=()=>rej(r.error)})}
+function store(n,m='readonly'){return db.transaction(n,m).objectStore(n)}function getAll(n){return new Promise((res,rej)=>{const r=store(n).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}function put(n,v){return new Promise((res,rej)=>{const r=store(n,'readwrite').put(v);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}function del(n,id){return new Promise((res,rej)=>{const r=store(n,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}function clearStore(n){return new Promise((res,rej)=>{const r=store(n,'readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+async function ensureCat(name,parentId,color){let c=categories.find(x=>x.name===name&&(x.parentId||null)===(parentId||null));if(c)return c;c={id:uid(),name,parentId:parentId||null,color,createdAt:now()};await put('categories',c);categories.push(c);return c}
+async function seedHierarchy(){categories=await getAll('categories');await ensureCat('العمل',null,'#6E9FD0');await ensureCat('شخصي',null,'#A88974');const food=await ensureCat('أكل',null,'#C99A4B');const rest=await ensureCat('مطاعم',food.id,'#A88974');const cafe=await ensureCat('كوفيات',food.id,'#6E9FD0');for(const city of ['أبوظبي','دبي','الشارقة']){await ensureCat(city,rest.id,'#C99A4B');await ensureCat(city,cafe.id,'#6E9FD0')}categories=await getAll('categories')}
+function childrenOf(id){return categories.filter(c=>(c.parentId||null)===(id||null))}function descendants(id){let o=[];for(const c of childrenOf(id)){o.push(c.id,...descendants(c.id))}return o}function catById(id){return categories.find(c=>c.id===id)}function pathFor(id){if(!id)return'غير مصنف';const p=[];let c=catById(id),g=0;while(c&&g++<30){p.unshift(c.name);c=catById(c.parentId)}return p.join(' › ')}function countForCategory(id){const ids=[id,...descendants(id)];return items.filter(i=>ids.includes(i.categoryId)).length}
+function renderCatOptions(sel,allowNone=true){const walk=(p=null,l=0)=>childrenOf(p).sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(c=>`<option value="${c.id}">${'— '.repeat(l)}${esc(c.name)}</option>`+walk(c.id,l+1)).join('');sel.innerHTML=(allowNone?'<option value="">غير مصنف</option>':'<option value="">بدون تصنيف أب</option>')+walk()}
+function renderTree(){const row=(c,l)=>`<div class="catrow" style="margin-right:${l*11}px"><span class="dot" style="background:${c.color||'#6E9FD0'}"></span><button class="name" data-open-cat="${c.id}">${esc(c.name)} <small style="opacity:.55">(${countForCategory(c.id)})</small></button><button class="mini" data-add-child="${c.id}">+ فرعي</button><button class="mini" data-del-cat="${c.id}" style="color:#B96C69">حذف</button></div>`;const walk=(p=null,l=0)=>childrenOf(p).sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(c=>row(c,l)+walk(c.id,l+1)).join('');$('#categoryTree').innerHTML=walk()||'<div class="empty"><b>لا توجد تصنيفات</b><span>أنشئ أول تصنيف من الأسفل.</span></div>'}
+function detectType(content){const s=(content||'').trim();if(/^https?:\/\/\S+$/i.test(s))return'link';if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))return'email';if(/^[+\d][\d\s()-]{6,}$/.test(s))return'phone';if((s.includes('{')&&s.includes('}'))||/<\/?[a-z][\s\S]*>/i.test(s)||/\b(const|let|function|SELECT|INSERT|class)\b/.test(s))return'code';return'text'}
+function typeLabel(t){return({link:'رابط',email:'بريد',phone:'رقم',code:'كود',text:'نص'})[t]||'نص'}function typeIcon(t){return({link:'↗',email:'@',phone:'☎',code:'⌘',text:'≡'})[t]||'≡'}function autoTitle(c,t){const s=(c||'').trim();if(t==='link'){try{return new URL(s).hostname.replace(/^www\./,'')}catch{}}if(t==='email')return s.split('@')[1]||'بريد إلكتروني';return s.split(/\n/)[0].trim().slice(0,48)||'محفوظ جديد'}function fmtDate(iso){const d=new Date(iso),n=new Date(),diff=(n-d)/864e5;if(diff<1&&n.getDate()===d.getDate())return'اليوم';if(diff<2)return'أمس';return d.toLocaleDateString('ar-AE',{day:'numeric',month:'short'})}
+function typeMatch(i){if(currentType==='all')return true;if(currentType==='contact')return['email','phone'].includes(i.type);return i.type===currentType}
+function filteredItems(){let a=[...items];const q=$('#search').value.trim().toLowerCase();if(currentView==='favorites')a=a.filter(i=>i.favorite);if(currentCategory){const ids=[currentCategory,...descendants(currentCategory)];a=a.filter(i=>ids.includes(i.categoryId))}a=a.filter(typeMatch);if(q)a=a.filter(i=>[i.title,i.content,(i.tags||[]).join(' '),pathFor(i.categoryId),typeLabel(i.type)].join(' ').toLowerCase().includes(q));a.sort((x,y)=>{if(!!x.pinned!==!!y.pinned)return x.pinned?-1:1;const a=new Date(x.updatedAt||x.createdAt),b=new Date(y.updatedAt||y.createdAt);return sortNewest?b-a:a-b});return a}
+function renderTypeFilters(){const defs=[['all','الكل',''],['link','روابط','↗'],['text','نصوص','≡'],['code','أكواد','⌘'],['contact','بيانات','@']];$('#typeFilters').innerHTML=defs.map(([k,l,i])=>`<button class="typechip ${currentType===k?'active':''}" data-type="${k}">${i?`<span>${i}</span>`:''}${l}</button>`).join('')}
+function trayIcon(){return'<svg width="54" height="54" viewBox="0 0 64 64" fill="none"><path d="M14 18h36l6 23v8a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5v-8l6-23Z" stroke="currentColor" stroke-width="3"/><path d="M9 41h15l4 6h8l4-6h15" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>'}
+function cardHTML(i){return`<article class="card"><div class="cardtop"><div class="typeicon">${typeIcon(i.type)}</div><div class="cardmain"><div class="titleline"><div class="title">${esc(i.title||autoTitle(i.content,i.type))}</div>${i.pinned?'<span class="pin">مثبّت</span>':''}</div><div class="preview">${esc(i.content)}</div><div class="meta"><span class="crumb">${esc(pathFor(i.categoryId))}</span>${(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}<span>${fmtDate(i.updatedAt||i.createdAt)}</span></div></div></div><div class="actions"><button class="action primary" data-copy="${i.id}">نسخ</button>${i.type==='link'?`<button class="action" data-open="${i.id}">فتح</button>`:''}<button class="action" data-fav="${i.id}">${i.favorite?'★':'☆'}</button><button class="action" data-edit="${i.id}">تعديل</button><button class="action danger" data-delete="${i.id}">حذف</button></div></article>`}
+function itemView(title,sub){const a=filteredItems();return`<div class="view-head"><div class="view-title"><h2>${title}</h2><p>${sub}</p><span class="count">${a.length} عنصر</span></div><div class="view-controls"><div class="seg"><button data-mode="list" class="${viewMode==='list'?'active':''}" aria-label="قائمة">☷</button><button data-mode="grid" class="${viewMode==='grid'?'active':''}" aria-label="شبكة">⊞</button></div><button class="sortbtn" id="sortBtn">${sortNewest?'↓ الأحدث':'↑ الأقدم'}</button></div></div>${a.length?`<div class="cards ${viewMode==='grid'?'grid':''}" id="cards">${a.map(cardHTML).join('')}</div>`:`<div class="empty">${trayIcon()}<b>لا توجد نتائج</b><span>${$('#search').value?'جرّب كلمة أخرى أو غيّر الفلتر.':'اضغط + لإضافة أول محفوظ.'}</span></div>`}`}
+function catIcon(name){if(name==='أكل')return'🍴';if(name==='مطاعم')return'⌂';if(name==='كوفيات')return'☕';if(['أبوظبي','دبي','الشارقة'].includes(name))return'⌖';if(name==='العمل')return'▣';if(name==='شخصي')return'◇';return'◫'}
+function categoryPage(){const q=$('#search').value.trim();if(q)return itemView('نتائج البحث','البحث شامل جميع التصنيفات');const here=currentCategory?catById(currentCategory):null;const kids=childrenOf(currentCategory).sort((a,b)=>a.name.localeCompare(b.name,'ar'));let crumbs=[];if(here){let c=here;while(c){crumbs.unshift(c);c=catById(c.parentId)}}const count=here?countForCategory(here.id):items.length;let html=`<div class="view-head"><div class="view-title"><h2>${here?esc(here.name):'التصنيفات'}</h2><p>${here?esc(pathFor(here.id)):'نظّم محفوظاتك بمستويات واضحة ودقيقة'}</p><span class="count">${count} عنصر</span></div></div><div class="cat-toolbar"><button id="manageCategories">＋ إدارة التصنيفات</button>${here?'<button id="catBack">‹ رجوع</button>':'<span></span>'}</div>`;if(crumbs.length)html+=`<div class="cat-breadcrumb"><button class="crumbbtn" data-crumb="">التصنيفات</button>${crumbs.map(c=>`<button class="crumbbtn" data-crumb="${c.id}">‹ ${esc(c.name)}</button>`).join('')}</div>`;if(kids.length)html+=`<div class="category-grid">${kids.map(c=>`<button class="category-box" data-cat-card="${c.id}"><span class="cat-ico">${catIcon(c.name)}</span><strong>${esc(c.name)}</strong><small>${countForCategory(c.id)} عنصر${childrenOf(c.id).length?` • ${childrenOf(c.id).length} تصنيف فرعي`:''}</small></button>`).join('')}</div>`;else{const a=filteredItems();html+=a.length?`<div class="cards ${viewMode==='grid'?'grid':''}" id="cards" style="margin-top:10px">${a.map(cardHTML).join('')}</div>`:`<div class="empty">${trayIcon()}<b>التصنيف فارغ</b><span>أضف محفوظًا واختر هذا التصنيف، أو أنشئ تصنيفًا فرعيًا مثل مدينة.</span></div>`}return html}
+function settingsPage(){return`<div class="view-head"><div class="view-title"><h2>الإعدادات</h2><p>النسخ الاحتياطي، التثبيت وإدارة البيانات</p></div></div><div class="settings-wrap"><div class="settings-card"><h3>نسخة احتياطية</h3><p>تصدير جميع المحفوظات والتصنيفات في ملف واحد ثم استعادته على جهاز آخر.</p><button class="widebtn primary" id="exportBtn">تصدير نسخة JSON</button><button class="widebtn" id="importBtn">استيراد نسخة</button></div><div class="settings-card"><h3>تثبيت كتطبيق</h3><p>عند إضافته للشاشة الرئيسية يعمل ClipNest بواجهة مستقلة وبدون شريط المتصفح.</p><button class="widebtn" id="installBtn">طريقة التثبيت</button></div><div class="settings-card"><h3>إعادة ضبط</h3><p>يحذف جميع بيانات ClipNest من هذا الجهاز فقط.</p><button class="widebtn" id="clearBtn" style="color:#B96C69">حذف جميع البيانات</button></div></div><div class="version"><strong>ClipNest v${VERSION}</strong>كل ما تحتاجه، محفوظ في مكانه.</div>`}
+function updateNav(){$$('.navbtn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===currentView))}
+function render(){renderTypeFilters();updateNav();let html;if(currentView==='categories')html=categoryPage();else if(currentView==='settings')html=settingsPage();else if(currentView==='favorites')html=itemView('المفضلة','المحفوظات التي تريد الوصول إليها بسرعة');else html=itemView('المحفوظات','روابط، نصوص ومعلوماتك المهمة');$('#mainArea').innerHTML=html;wireDynamic()}
+function wireDynamic(){const sort=$('#sortBtn');if(sort)sort.onclick=()=>{sortNewest=!sortNewest;render()};$$('[data-mode]').forEach(b=>b.onclick=()=>{viewMode=b.dataset.mode;render()});const manage=$('#manageCategories');if(manage)manage.onclick=openCategories;const back=$('#catBack');if(back)back.onclick=()=>{const c=catById(currentCategory);currentCategory=c?.parentId||null;render()};$$('[data-crumb]').forEach(b=>b.onclick=()=>{currentCategory=b.dataset.crumb||null;render()});$$('[data-cat-card]').forEach(b=>b.onclick=()=>{currentCategory=b.dataset.catCard;render()});const cards=$('#cards');if(cards)cards.onclick=handleCardClick;const ex=$('#exportBtn');if(ex)ex.onclick=exportBackup;const im=$('#importBtn');if(im)im.onclick=()=>$('#importFile').click();const ins=$('#installBtn');if(ins)ins.onclick=installApp;const cl=$('#clearBtn');if(cl)cl.onclick=clearAll}
+function showSheet(id){$('#overlay').classList.add('show');$(id).classList.add('show')}function closeSheets(){$('#overlay').classList.remove('show');$$('.sheet').forEach(s=>s.classList.remove('show'))}
+function openItem(item=null){$('#itemId').value=item?.id||'';$('#itemTitle').value=item?.title||'';$('#itemContent').value=item?.content||'';renderCatOptions($('#itemCategory'),true);$('#itemCategory').value=item?.categoryId||currentCategory||'';$('#itemTags').value=(item?.tags||[]).join('، ');editFavorite=!!item?.favorite;editPinned=!!item?.pinned;$('#favoriteToggle').textContent=(editFavorite?'★ في المفضلة':'☆ إضافة للمفضلة');$('#pinToggle').textContent=editPinned?'⌁ مثبّت':'⌁ تثبيت بالأعلى';$('#itemSheetTitle').textContent=item?'تعديل المحفوظ':'إضافة محفوظ جديد';showSheet('#itemSheet');setTimeout(()=>$('#itemContent').focus(),230)}
+async function saveItem(){const content=$('#itemContent').value.trim();if(!content)return toast('اكتب أو الصق محتوى أولًا');const id=$('#itemId').value||uid(),old=items.find(i=>i.id===id),type=detectType(content),obj={id,title:$('#itemTitle').value.trim()||autoTitle(content,type),content,categoryId:$('#itemCategory').value||null,tags:$('#itemTags').value.split(/[،,]/).map(x=>x.trim()).filter(Boolean),type,favorite:editFavorite,pinned:editPinned,createdAt:old?.createdAt||now(),updatedAt:now(),copyCount:old?.copyCount||0,copiedAt:old?.copiedAt||null};await put('items',obj);items=await getAll('items');closeSheets();render();toast('تم الحفظ')}
+async function copyItem(id){const i=items.find(x=>x.id===id);if(!i)return;try{await navigator.clipboard.writeText(i.content)}catch{const t=document.createElement('textarea');t.value=i.content;t.style.position='fixed';t.style.opacity=0;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}i.copyCount=(i.copyCount||0)+1;i.copiedAt=now();await put('items',i);toast('تم النسخ')}
+async function pasteClipboard(){try{const txt=await navigator.clipboard.readText();openItem();if(txt){$('#itemContent').value=txt;$('#itemTitle').value=autoTitle(txt,detectType(txt))}}catch{openItem();toast('الصق المحتوى داخل الخانة')}}
+async function handleCardClick(e){const b=e.target.closest('[data-copy],[data-open],[data-fav],[data-edit],[data-delete]');if(!b)return;const d=b.dataset;if(d.copy)return copyItem(d.copy);if(d.open){const i=items.find(x=>x.id===d.open);if(i)window.open(i.content,'_blank','noopener')}if(d.fav){const i=items.find(x=>x.id===d.fav);i.favorite=!i.favorite;i.updatedAt=now();await put('items',i);items=await getAll('items');render();toast(i.favorite?'أضيف للمفضلة':'أزيل من المفضلة')}if(d.edit)openItem(items.find(x=>x.id===d.edit));if(d.delete&&confirm('حذف هذا المحفوظ؟')){await del('items',d.delete);items=await getAll('items');render();toast('تم الحذف')}}
+function openCategories(){renderTree();renderCatOptions($('#catParent'),false);showSheet('#categorySheet')}
+async function addCategory(){const name=$('#catName').value.trim();if(!name)return toast('اكتب اسم التصنيف');const colors=['#6E9FD0','#A88974','#C99A4B','#8CA9BE','#B5977F'];await put('categories',{id:uid(),name,parentId:$('#catParent').value||null,color:colors[categories.length%colors.length],createdAt:now()});$('#catName').value='';categories=await getAll('categories');renderTree();renderCatOptions($('#catParent'),false);render();toast('تمت إضافة التصنيف')}
+async function deleteCategory(id){if(countForCategory(id)>0)return toast('انقل العناصر من التصنيف أولًا');if(childrenOf(id).length)return toast('احذف التصنيفات الفرعية أولًا');if(confirm('حذف هذا التصنيف؟')){await del('categories',id);categories=await getAll('categories');if(currentCategory===id)currentCategory=null;renderTree();render()}}
+async function exportBackup(){const data={app:'ClipNest',version:VERSION,exportedAt:now(),categories,items},blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`clipnest-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);toast('تم إنشاء النسخة')}
+async function importBackup(file){try{const data=JSON.parse(await file.text());if(!Array.isArray(data.items)||!Array.isArray(data.categories))throw Error();for(const c of data.categories)await put('categories',c);for(const i of data.items)await put('items',i);categories=await getAll('categories');items=await getAll('items');await seedHierarchy();categories=await getAll('categories');render();toast('تم الاستيراد')}catch{toast('ملف النسخة غير صالح')}}
+function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>deferredPrompt=null);return}const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);alert(isiOS?'على iPhone: افتح الرابط في Safari → مشاركة → إضافة إلى الشاشة الرئيسية.':'من قائمة المتصفح اختر تثبيت التطبيق أو Add to Home Screen.')}
+async function clearAll(){if(!confirm('سيتم حذف جميع بيانات ClipNest من هذا الجهاز. هل أنت متأكد؟'))return;await clearStore('items');await clearStore('categories');items=[];categories=[];await seedHierarchy();categories=await getAll('categories');currentCategory=null;currentView='all';render();toast('تمت إعادة الضبط')}
+$('#overlay').onclick=closeSheets;$$('[data-close]').forEach(b=>b.onclick=closeSheets);$('#addNav').onclick=()=>openItem();$('#menuBtn').onclick=()=>{currentView='settings';currentCategory=null;render()};$('#pasteBtn').onclick=pasteClipboard;$('#search').oninput=render;$('#saveItem').onclick=saveItem;$('#favoriteToggle').onclick=()=>{editFavorite=!editFavorite;$('#favoriteToggle').textContent=editFavorite?'★ في المفضلة':'☆ إضافة للمفضلة'};$('#pinToggle').onclick=()=>{editPinned=!editPinned;$('#pinToggle').textContent=editPinned?'⌁ مثبّت':'⌁ تثبيت بالأعلى'};$('#addCategory').onclick=addCategory;$('#typeFilters').onclick=e=>{const b=e.target.closest('[data-type]');if(!b)return;currentType=b.dataset.type;if(currentView==='settings'||currentView==='categories'){currentView='all';currentCategory=null}render()};$('#bottomNav').onclick=e=>{const b=e.target.closest('[data-view]');if(!b)return;currentView=b.dataset.view;currentCategory=null;render()};$('#categoryTree').onclick=e=>{const o=e.target.closest('[data-open-cat]');if(o){currentView='categories';currentCategory=o.dataset.openCat;closeSheets();render();return}const a=e.target.closest('[data-add-child]');if(a){renderCatOptions($('#catParent'),false);$('#catParent').value=a.dataset.addChild;$('#catName').focus();return}const d=e.target.closest('[data-del-cat]');if(d)deleteCategory(d.dataset.delCat)};$('#importFile').onchange=e=>{if(e.target.files[0])importBackup(e.target.files[0]);e.target.value=''};
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(r=>r.update()).catch(()=>{}));
+(async()=>{await openDB();items=await getAll('items');await seedHierarchy();categories=await getAll('categories');render()})();
 })();
 </script>
-</body>
-</html>
+</body></html>

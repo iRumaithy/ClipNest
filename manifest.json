@@ -1,16 +1,12 @@
 {
-  "name": "ClipNest — محفوظاتي",
+  "name": "ClipNest — محفوظاتي وطلباتي",
   "short_name": "ClipNest",
-  "description": "مكتبة شخصية منظمة لحفظ الروابط والنصوص والمعلومات.",
+  "description": "حفظ وتنظيم المعلومات والروابط ومتابعة الطلبات.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
   "background_color": "#F8F0DF",
   "theme_color": "#F8F0DF",
   "icons": [

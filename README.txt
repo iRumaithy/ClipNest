@@ -1,4 +1,4 @@
-ClipNest v1.7.0 — Workspace + Store Logos + Owner Sync
+ClipNest v1.7.1 — Workspace + Store Logos + Owner Sync
 
 التحديثات الرئيسية:
 - تبويبان رئيسيان أعلى التطبيق: المحفوظات / طلباتي.
@@ -30,3 +30,9 @@ ClipNest v1.7.0 — Workspace + Store Logos + Owner Sync
 - icon-512.png
 - icon-1024.png
 - apple-touch-icon.png
+
+
+v1.7.1:
+- إعادة شعارات التطبيقات إلى بطاقات الروابط بدل سهم الرابط.
+- المتاجر المعروفة تستخدم الهوية/الفافيكون الفعلي الحالي من نطاق المتجر بدل رسم تقريبي.
+- الشعار المخصص للمتجر يبقى أولوية ويزامن بين الأجهزة.

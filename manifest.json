@@ -1,7 +1,7 @@
 {
   "name": "ClipNest — محفوظاتي وطلباتي",
   "short_name": "ClipNest",
-  "description": "ClipNest لحفظ الروابط والمعلومات، متابعة الطلبات، مزامنة حساب المالك، وحفظ شعارات المتاجر.",
+  "description": "ClipNest — محفوظات وطلبات مع مزامنة لحظية بين أجهزتك.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",

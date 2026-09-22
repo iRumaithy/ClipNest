@@ -1,10 +1,10 @@
 {
   "name": "ClipNest — محفوظاتي وطلباتي",
   "short_name": "ClipNest",
-  "description": "ClipNest — محفوظات وطلبات مع مزامنة لحظية بين أجهزتك.",
+  "description": "ClipNest — محفوظات وطلبات مع مزامنة لحظية وفرز حسب التطبيقات.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./?v=1.8.0",
+  "start_url": "./?v=1.8.1",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F8F0DF",

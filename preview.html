@@ -102,9 +102,9 @@ button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}
 
 .store-logo-preview .brand-live-stack{border-radius:10px}
 /* Uploaded logos use a protected safe area so names/marks are never clipped. */
-.order-store-logo img.custom-store-logo,.store-logo-preview img.custom-store-logo{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;box-sizing:border-box!important;padding:6%!important;background:transparent!important;border-radius:0!important;transform:none!important}
-.order-store-logo.custom-logo-wrap{padding:5px!important;background:linear-gradient(155deg,#fffdfa,#f4eadc)}
-.store-logo-preview.custom-logo-wrap{padding:5px!important;background:#fffdf8}
+.order-store-logo img.custom-store-logo,.store-logo-preview img.custom-store-logo{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;box-sizing:border-box!important;padding:6%!important;background:#fff!important;border-radius:16px!important;transform:none!important}
+.order-store-logo.custom-logo-wrap{padding:5px!important;background:linear-gradient(155deg,#fffdfa,#f4eadc);border-radius:17px!important}
+.store-logo-preview.custom-logo-wrap{padding:5px!important;background:#fffdf8;border-radius:18px!important}
 
 
 </style>
@@ -218,7 +218,7 @@ button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>(()=>{'use strict';
-const VERSION='1.8.6',DB_NAME='clipnestDB',DB_VERSION=6;
+const VERSION='1.8.7',DB_NAME='clipnestDB',DB_VERSION=6;
 const DEFAULT_CITIES=['أبوظبي','دبي','الشارقة','عجمان','أم القيوين','رأس الخيمة','الفجيرة','العين'];
 const PRIMARY_DEFAULTS=[
   ['أكل','#C99A4B','🍴'],['كمبيوتر','#6E9FD0','⌘'],['مواقع','#6E9FD0','↗'],['عمل','#A88974','▣'],['شخصي','#A88974','◇'],['سيارات','#C99A4B','◈'],['سفر','#6E9FD0','✈'],['تسوق','#C99A4B','⌑'],['معلومات عامة','#A88974','≡']

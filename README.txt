@@ -1,4 +1,4 @@
-ClipNest v1.8.1 — True Sync
+ClipNest v1.8.2 — True Sync
 
 التحديث:
 - مزامنة سجلية مستقلة لكل محفوظ/طلب/حذف بدل مزامنة Snapshot كامل.
@@ -11,8 +11,14 @@ ClipNest v1.8.1 — True Sync
 استبدل جميع ملفات المستودع بهذه الملفات.
 
 
-تحديث v1.8.1:
+تحديث v1.8.2:
 - معالجة الوميض الناتج عن إعادة رسم الواجهة الدورية وتحميل شعارات التطبيقات من الشبكة.
 - مزامنة تفاضلية: لا يعاد رسم الواجهة إلا عند وجود تغيير حقيقي.
 - شعارات التطبيقات المعروفة مدمجة محليًا وثابتة.
 - فلتر جديد لفرز المحفوظات حسب التطبيق مثل Instagram وTikTok وYouTube وغيرها.
+
+
+v1.8.2:
+- All known app/store icons are embedded locally as SVG (no runtime favicon downloads).
+- Fixed Amazon/noon/Temu and other known store logo blanks.
+- Improved app-icon fidelity and removed logo-network flicker.

@@ -1,4 +1,4 @@
-const VERSION='1.8.5';
+const VERSION='1.8.6';
 const SHELL=`clipnest-shell-${VERSION}`;
 const BRAND='clipnest-google-brand-icons-v2';
 const SHELL_ASSETS=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./icon-1024.png','./apple-touch-icon.png'];

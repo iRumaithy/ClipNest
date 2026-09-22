@@ -4,7 +4,7 @@
   "description": "ClipNest — محفوظات وطلبات مع مزامنة لحظية بين أجهزتك.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "./?v=1.8.0",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F8F0DF",

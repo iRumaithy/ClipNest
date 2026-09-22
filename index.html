@@ -90,9 +90,9 @@ button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}
 @media (max-width:390px){.workspace-tab{font-size:12px}.order-store-logo{width:52px;height:52px;border-radius:15px}.live-datetime{font-size:10.5px;gap:6px}.top-actions{gap:5px}.refresh-btn,.menu-btn{width:39px;height:39px}}
 
 /* v1.7.1 — restore real application badges + real merchant identity */
-.brand-live-stack{position:relative;display:block;width:100%;height:100%;overflow:hidden;border-radius:inherit;background:#fff}
-.brand-live-stack>.brand-svg{position:absolute;inset:0;width:100%;height:100%}
-.brand-live-stack>.brand-live-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.brand-live-stack{position:relative;display:block;width:100%;height:100%;overflow:hidden;border-radius:inherit;background:transparent;isolation:isolate}
+.brand-live-stack>.brand-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.brand-live-stack>.brand-live-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:transparent;opacity:0;z-index:2;transition:opacity .14s ease;will-change:opacity;transform:translateZ(0);backface-visibility:hidden}.brand-live-stack>.brand-live-img.ready{opacity:1}
 .typeicon.brand-type{padding:0!important;border:0!important;background:transparent!important;overflow:hidden}
 .typeicon.brand-type .brand-live-stack{border-radius:12px}
 .mini-brand .brand-live-stack{border-radius:5px}
@@ -212,7 +212,7 @@ button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>(()=>{'use strict';
-const VERSION='1.8.3',DB_NAME='clipnestDB',DB_VERSION=6;
+const VERSION='1.8.4',DB_NAME='clipnestDB',DB_VERSION=6;
 const DEFAULT_CITIES=['أبوظبي','دبي','الشارقة','عجمان','أم القيوين','رأس الخيمة','الفجيرة','العين'];
 const PRIMARY_DEFAULTS=[
   ['أكل','#C99A4B','🍴'],['كمبيوتر','#6E9FD0','⌘'],['مواقع','#6E9FD0','↗'],['عمل','#A88974','▣'],['شخصي','#A88974','◇'],['سيارات','#C99A4B','◈'],['سفر','#6E9FD0','✈'],['تسوق','#C99A4B','⌑'],['معلومات عامة','#A88974','≡']
@@ -290,11 +290,16 @@ const KNOWN_STORE_DOMAINS=[
  {domain:'ups.com',keys:['ups']},
  {domain:'emiratespost.ae',keys:['emirates post','emiratespost','بريد الامارات','بريد الإمارات']}
 ];
-function brandImageHTML(key,label=''){return brandIconSVG(key)||''}
+const BRAND_READY=new Set((()=>{try{return JSON.parse(localStorage.getItem('clipnest-brand-ready-v2')||'[]')}catch{return[]}})());
+function brandDomainForKey(key){return BRAND_DOMAIN[key]||''}
+function googleBrandIconURL(key){const d=brandDomainForKey(key);return d?`https://www.google.com/s2/favicons?sz=128&domain_url=${encodeURIComponent('https://'+d)}`:''}
+window.__clipnestBrandLoaded=function(img,key){try{BRAND_READY.add(key);localStorage.setItem('clipnest-brand-ready-v2',JSON.stringify([...BRAND_READY]))}catch{};requestAnimationFrame(()=>img.classList.add('ready'))}
+window.__clipnestBrandError=function(img,key){try{BRAND_READY.delete(key);localStorage.setItem('clipnest-brand-ready-v2',JSON.stringify([...BRAND_READY]))}catch{};img.remove()}
+function brandImageHTML(key,label=''){const fallback=brandIconSVG(key)||'',url=googleBrandIconURL(key);if(!url)return fallback;const ready=BRAND_READY.has(key)?' ready':'';return`<span class="brand-live-stack">${fallback}<img class="brand-live-img${ready}" src="${url}" alt="${esc(label||APP_LABELS[key]||key)}" loading="eager" decoding="async" referrerpolicy="no-referrer" onload="__clipnestBrandLoaded(this,'${key}')" onerror="__clipnestBrandError(this,'${key}')"></span>`}
 function normalizeMerchantLookup(v){return(v||'').toLowerCase().replace(/[._\-]+/g,' ').replace(/\s+/g,' ').trim()}
 function knownStoreDomain(name){const n=normalizeMerchantLookup(name);if(!n)return'';for(const x of KNOWN_STORE_DOMAINS)if(x.keys.some(k=>n===normalizeMerchantLookup(k)||n.includes(normalizeMerchantLookup(k))))return x.domain;return''}
 function knownStoreBrandKey(domain){for(const [k,d] of Object.entries(BRAND_DOMAIN))if(d===domain)return k;return''}
-function storeOfficialImageHTML(name){const d=knownStoreDomain(name);if(!d)return'';const k=knownStoreBrandKey(d);return k?brandIconSVG(k):''}
+function storeOfficialImageHTML(name){const d=knownStoreDomain(name);if(!d)return'';const k=knownStoreBrandKey(d);return k?brandImageHTML(k,name):''}
 
 function matchDomain(map,host){host=(host||'').toLowerCase();for(const [d,v] of Object.entries(map))if(host===d||host.endsWith('.'+d))return v;return''}
 function brandIconSVG(key){

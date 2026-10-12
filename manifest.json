@@ -1,7 +1,7 @@
 {
-  "name": "ClipNest — محفوظاتي",
+  "name": "ClipNest 2.0 — المحفوظات وطلباتي",
   "short_name": "ClipNest",
-  "description": "محفوظات وروابط وطلباتك في مكان واحد.",
+  "description": "تنظيم المحفوظات والطلبات مع بحث ذكي ومزامنة اختيارية",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
@@ -28,5 +28,15 @@
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

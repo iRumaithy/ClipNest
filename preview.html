@@ -130,6 +130,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .order-picture{margin:10px 0 0;display:flex;gap:8px;align-items:center;color:#7B6654;font-size:10px}.order-picture button{background:transparent;border:0;text-decoration:underline;color:#4E7FAF}
 .sheetbody{scrollbar-gutter:stable}
 @media(prefers-reduced-motion:reduce){.card,.order-card,.sheet,.overlay,.brand-live-img,.refresh-btn svg{animation:none!important;transition:none!important}}
+
+/* v2.0.1 — In-app order attachment viewer; never opens a new browser window. */
+.attachment-viewer[hidden]{display:none!important}
+.attachment-viewer{position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;background:rgba(27,29,30,.98);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 15px);overscroll-behavior:contain}
+.attachment-viewer__head{width:100%;max-width:680px;min-height:50px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750;font-size:14px;flex:none}
+.attachment-viewer__close{min-width:90px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 13px;background:#fff8eb;color:#574435;border:1px solid rgba(255,255,255,.2);border-radius:14px;font-size:13px;font-weight:800;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.attachment-viewer__close:focus-visible{outline:3px solid #88B6E6;outline-offset:3px}
+.attachment-viewer__stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;padding:12px 0}
+.attachment-viewer__stage img{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;object-position:center;border-radius:7px;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
+.attachment-viewer__hint{flex:none;margin:4px 0 0;text-align:center;color:#c5bdad;font-size:11px}
+@media(prefers-reduced-motion:reduce){.attachment-viewer *{transition:none!important}}
 </style>
 <style>.brand-svg{shape-rendering:geometricPrecision;image-rendering:auto}.order-store-logo .brand-svg,.typeicon.brand-type .brand-svg,.appchip-icon .brand-svg,.mini-brand .brand-svg{display:block;width:100%;height:100%}</style>
 </head>
@@ -240,9 +251,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 <input type="file" id="importFile" accept=".json,application/json" hidden>
 </div>
 
+
+<!-- Order receipt stays inside the PWA, so iOS always has a visible close control. -->
+<div id="attachmentViewer" class="attachment-viewer" role="dialog" aria-modal="true" aria-label="صورة تأكيد الطلب" hidden>
+  <div class="attachment-viewer__head"><span id="attachmentViewerTitle">صورة تأكيد الطلب</span><button id="attachmentViewerClose" type="button" class="attachment-viewer__close" aria-label="إغلاق الصورة والعودة للطلبات">✕ إغلاق</button></div>
+  <div id="attachmentViewerStage" class="attachment-viewer__stage"><img id="attachmentViewerImage" alt="صورة تأكيد الطلب" draggable="false"></div>
+  <div class="attachment-viewer__hint">اضغط خارج الصورة أو اسحب للأسفل للإغلاق</div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>(()=>{'use strict';
-const VERSION='2.0.0',DB_NAME='clipnestDB',DB_VERSION=7;
+const VERSION='2.0.1',DB_NAME='clipnestDB',DB_VERSION=7;
 const DEFAULT_CITIES=['أبوظبي','دبي','الشارقة','عجمان','أم القيوين','رأس الخيمة','الفجيرة','العين'];
 const PRIMARY_DEFAULTS=[
   ['أكل','#C99A4B','🍴'],['كمبيوتر','#6E9FD0','⌘'],['مواقع','#6E9FD0','↗'],['عمل','#A88974','▣'],['شخصي','#A88974','◇'],['سيارات','#C99A4B','◈'],['سفر','#6E9FD0','✈'],['تسوق','#C99A4B','⌑'],['معلومات عامة','#A88974','≡']
@@ -538,7 +557,7 @@ async function resizeOrderAttachment(file){const maxBytes=3*1024*1024;if(file.si
 function openOrder(order=null,prefill=null){const o=order||{};pendingStoreLogoData='';orderAttachmentData=o.attachmentData||'';showAttachment();$('#orderId').value=o.id||'';$('#orderId').dataset.sourceItemId=o.sourceItemId||prefill?.sourceItemId||'';$('#orderName').value=o.name||prefill?.name||'';$('#orderStore').value=o.store||'';$('#orderPrice').value=o.price??'';$('#orderDate').value=o.orderDate||(prefill?.url?'':isoToday());$('#orderStatus').value=o.status||'ordered';$('#orderEtaFrom').value=o.etaFrom||'';$('#orderEtaTo').value=o.etaTo||'';$('#orderNumber').value=o.orderNumber||'';$('#trackingNumber').value=o.trackingNumber||'';$('#trackingUrl').value=o.trackingUrl||prefill?.url||'';$('#deliveryMethod').value=o.deliveryMethod||'delivery';$('#orderNotes').value=o.notes||'';$('#smartOrderInput').value=prefill?.url||'';$('#smartOrderResult').textContent='يمكن التعرف على المتجر ورقم الطلب/التتبع والتواريخ إذا كانت ظاهرة في الرابط أو النص.';$('#orderSheetTitle').textContent=order?'تعديل الطلب':'إضافة طلب جديد';renderStoreLogoPreview();showSheet('#orderSheet');if(prefill?.url)applySmartOrder(prefill.url,true);setTimeout(()=>$('#orderName').focus(),220)}
 async function saveOrder(){const name=$('#orderName').value.trim();if(!name)return toast('اكتب اسم الطلب');const id=$('#orderId').value||uid(),old=orders.find(o=>o.id===id),status=$('#orderStatus').value,storeName=$('#orderStore').value.trim(),obj={...old,id,name,store:storeName,price:$('#orderPrice').value.trim(),orderDate:$('#orderDate').value||'',status,etaFrom:$('#orderEtaFrom').value||'',etaTo:$('#orderEtaTo').value||'',orderNumber:$('#orderNumber').value.trim(),trackingNumber:$('#trackingNumber').value.trim(),trackingUrl:$('#trackingUrl').value.trim(),deliveryMethod:$('#deliveryMethod').value,notes:$('#orderNotes').value.trim(),attachmentData:orderAttachmentData,sourceItemId:old?.sourceItemId||$('#orderId').dataset.sourceItemId||null,createdAt:old?.createdAt||now(),updatedAt:now(),receivedAt:status==='received'?(old?.receivedAt||now()):null};await saveStoreLogoIfNeeded(storeName);await put('orders',obj);orders=await getAll('orders');pendingStoreLogoData='';closeSheets();render();toast('تم حفظ الطلب');if(authSession)pushCloudState({quiet:true})}
 async function toggleReceived(id){const o=orders.find(x=>x.id===id);if(!o)return;const was=o.status==='received';o.status=was?'transit':'received';o.receivedAt=was?null:now();o.updatedAt=now();await put('orders',o);orders=await getAll('orders');render();toast(was?'أعيد إلى الطلبات':'تم تسجيل الاستلام');if(authSession)pushCloudState({quiet:true})}
-async function handleOrderClick(e){const b=e.target.closest('[data-receive-order],[data-track-order],[data-copy-track],[data-edit-order],[data-delete-order],[data-repeat-order],[data-open-source],[data-view-attachment]');if(!b)return;const d=b.dataset;if(d.receiveOrder)return toggleReceived(d.receiveOrder);if(d.trackOrder){const o=orders.find(x=>x.id===d.trackOrder);if(o?.trackingUrl)window.open(o.trackingUrl,'_blank','noopener')}if(d.copyTrack){const o=orders.find(x=>x.id===d.copyTrack);if(o?.trackingNumber){try{await navigator.clipboard.writeText(o.trackingNumber);toast('تم نسخ رقم التتبع')}catch{}}}if(d.editOrder)openOrder(orders.find(x=>x.id===d.editOrder));if(d.repeatOrder){const o=orders.find(x=>x.id===d.repeatOrder);if(o){openOrder(null);for(const [sel,val] of [['#orderName',o.name],['#orderStore',o.store],['#orderPrice',o.price],['#deliveryMethod',o.deliveryMethod],['#trackingUrl',o.trackingUrl]])$(sel).value=val||'';$('#orderDate').value=isoToday();$('#orderEtaFrom').value='';$('#orderEtaTo').value='';renderStoreLogoPreview();toast('تكرار الطلب — حدد الموعد الجديد')}}if(d.openSource){const o=orders.find(x=>x.id===d.openSource),i=items.find(x=>x.id===o?.sourceItemId);if(i){currentView='all';render();openItem(i)}else toast('المحفوظ الأصلي غير متوفر على هذا الجهاز')}if(d.viewAttachment){const o=orders.find(x=>x.id===d.viewAttachment);if(o?.attachmentData){const w=window.open('','_blank');if(w){w.document.write('<title>صورة الطلب</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#efe4d1;display:grid;place-items:center;min-height:100vh}img{max-width:100vw;max-height:100vh;object-fit:contain}</style><img id="photo">');w.document.getElementById('photo').src=o.attachmentData}}}if(d.deleteOrder&&confirm('نقل هذا الطلب إلى سلة المحذوفات؟')){const o=orders.find(x=>x.id===d.deleteOrder);if(o)await moveToTrash('order',o)}}
+async function handleOrderClick(e){const b=e.target.closest('[data-receive-order],[data-track-order],[data-copy-track],[data-edit-order],[data-delete-order],[data-repeat-order],[data-open-source],[data-view-attachment]');if(!b)return;const d=b.dataset;if(d.receiveOrder)return toggleReceived(d.receiveOrder);if(d.trackOrder){const o=orders.find(x=>x.id===d.trackOrder);if(o?.trackingUrl)window.open(o.trackingUrl,'_blank','noopener')}if(d.copyTrack){const o=orders.find(x=>x.id===d.copyTrack);if(o?.trackingNumber){try{await navigator.clipboard.writeText(o.trackingNumber);toast('تم نسخ رقم التتبع')}catch{}}}if(d.editOrder)openOrder(orders.find(x=>x.id===d.editOrder));if(d.repeatOrder){const o=orders.find(x=>x.id===d.repeatOrder);if(o){openOrder(null);for(const [sel,val] of [['#orderName',o.name],['#orderStore',o.store],['#orderPrice',o.price],['#deliveryMethod',o.deliveryMethod],['#trackingUrl',o.trackingUrl]])$(sel).value=val||'';$('#orderDate').value=isoToday();$('#orderEtaFrom').value='';$('#orderEtaTo').value='';renderStoreLogoPreview();toast('تكرار الطلب — حدد الموعد الجديد')}}if(d.openSource){const o=orders.find(x=>x.id===d.openSource),i=items.find(x=>x.id===o?.sourceItemId);if(i){currentView='all';render();openItem(i)}else toast('المحفوظ الأصلي غير متوفر على هذا الجهاز')}if(d.viewAttachment){const o=orders.find(x=>x.id===d.viewAttachment);if(o?.attachmentData)openAttachmentViewer(o)}if(d.deleteOrder&&confirm('نقل هذا الطلب إلى سلة المحذوفات؟')){const o=orders.find(x=>x.id===d.deleteOrder);if(o)await moveToTrash('order',o)}}
 
 
 function canonicalSavedContent(text){const v=String(text||'').trim();try{const u=new URL(v);if(!['http:','https:'].includes(u.protocol))return v.toLowerCase();u.hash='';u.hostname=u.hostname.toLowerCase().replace(/^www\./,'');for(const key of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|igsh|si|mc_cid|mc_eid|ref_src|feature)$/i.test(key))u.searchParams.delete(key);const p=[...u.searchParams.entries()].sort(([a,av],[b,bv])=>a.localeCompare(b)||av.localeCompare(bv));u.search='';for(const [k,val] of p)u.searchParams.append(k,val);u.pathname=u.pathname.replace(/\/$/,'')||'/';return u.toString().replace(/\/$/,'').replace(/^http:/,'https:')}catch{return v.replace(/\s+/g,' ').toLowerCase()}}
@@ -584,6 +603,55 @@ async function exportBackup(){const data={app:'ClipNest',version:VERSION,exporte
 async function importBackup(file){try{const data=JSON.parse(await file.text());if(!Array.isArray(data.items))throw Error();if(Array.isArray(data.primaryCategories))for(const x of data.primaryCategories)await put('primaryCategories',x);if(Array.isArray(data.secondaryCategories))for(const x of data.secondaryCategories)await put('secondaryCategories',x);if(Array.isArray(data.cities))for(const x of data.cities)await put('cities',x);if(Array.isArray(data.storeLogos))for(const x of data.storeLogos)await put('storeLogos',x);if(Array.isArray(data.categories))for(const x of data.categories)await put('categories',x);for(const x of data.items)await put('items',x);if(Array.isArray(data.orders))for(const x of data.orders)await put('orders',x);if(Array.isArray(data.trash))for(const x of data.trash)await put('trash',x);items=await getAll('items');orders=await getAll('orders');trash=await getAll('trash');storeLogos=await getAll('storeLogos');legacyCategories=await getAll('categories');await seedTaxonomy();await migrateLegacyItems();render();toast('تم الاستيراد')}catch(e){console.error(e);toast('ملف النسخة غير صالح')}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>deferredPrompt=null);return}const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);alert(isiOS?'على iPhone: افتح الرابط في Safari → مشاركة → إضافة إلى الشاشة الرئيسية.':'من قائمة المتصفح اختر تثبيت التطبيق أو Add to Home Screen.')}
 async function clearAll(){if(!confirm('سيتم حذف جميع بيانات ClipNest من هذا الجهاز فقط. هل أنت متأكد؟'))return;syncApplying=true;try{for(const n of ['items','categories','primaryCategories','secondaryCategories','cities','orders','trash','storeLogos'])await clearStore(n);items=[];orders=[];trash=[];storeLogos=[];legacyCategories=[];primaryCategories=[];secondaryCategories=[];cities=[];await seedTaxonomy();localStorage.setItem('clipnest-last-local-change','0');currentPrimary=currentSecondary=currentCity=null;currentView='all';render();toast(authSession?'تم مسح هذا الجهاز — يمكنك استعادة بيانات الحساب بالمزامنة':'تمت إعادة الضبط')}finally{syncApplying=false}}
+
+// In-app image viewer replaces window.open('', '_blank'), which traps standalone iOS PWAs.
+let attachmentViewerReturnFocus=null;
+function openAttachmentViewer(order){
+  if(!order?.attachmentData)return;
+  const viewer=$('#attachmentViewer'), image=$('#attachmentViewerImage');
+  if(!viewer||!image)return;
+  attachmentViewerReturnFocus=document.activeElement;
+  $('#attachmentViewerTitle').textContent=order.name?'صورة تأكيد الطلب — '+order.name:'صورة تأكيد الطلب';
+  image.src=order.attachmentData;
+  image.alt='صورة تأكيد الطلب'+(order.name?' — '+order.name:'');
+  viewer.hidden=false;
+  $('#attachmentViewerClose').focus({preventScroll:true});
+}
+function closeAttachmentViewer(){
+  const viewer=$('#attachmentViewer');
+  if(!viewer||viewer.hidden)return;
+  viewer.hidden=true;
+  $('#attachmentViewerImage').removeAttribute('src');
+  if(attachmentViewerReturnFocus?.isConnected)attachmentViewerReturnFocus.focus({preventScroll:true});
+  attachmentViewerReturnFocus=null;
+}
+$('#attachmentViewerClose').addEventListener('click',closeAttachmentViewer);
+$('#attachmentViewer').addEventListener('click',e=>{
+  if(e.target.id==='attachmentViewer'||e.target.id==='attachmentViewerStage')closeAttachmentViewer();
+});
+document.addEventListener('keydown',e=>{
+  const viewer=$('#attachmentViewer');
+  if(!viewer||viewer.hidden)return;
+  if(e.key==='Escape'||e.key==='Backspace'){
+    e.preventDefault();closeAttachmentViewer();
+  }else if(e.key==='Tab'){
+    e.preventDefault();$('#attachmentViewerClose').focus({preventScroll:true});
+  }
+});
+let attachmentViewerStartY=null,attachmentViewerStartX=null;
+$('#attachmentViewerStage').addEventListener('touchstart',e=>{
+  if(e.touches.length!==1){attachmentViewerStartY=null;return}
+  attachmentViewerStartX=e.touches[0].clientX;
+  attachmentViewerStartY=e.touches[0].clientY;
+},{passive:true});
+$('#attachmentViewerStage').addEventListener('touchend',e=>{
+  if(attachmentViewerStartY==null||e.changedTouches.length!==1)return;
+  const dy=e.changedTouches[0].clientY-attachmentViewerStartY;
+  const dx=Math.abs(e.changedTouches[0].clientX-attachmentViewerStartX);
+  attachmentViewerStartY=null;
+  if(dy>110&&dx<85)closeAttachmentViewer();
+},{passive:true});
+
 $('#overlay').onclick=closeSheets;$$('[data-close]').forEach(b=>b.onclick=closeSheets);$('#pickerClose').onclick=()=>$('#pickerSheet').classList.remove('show');$('#addNav').onclick=()=>currentView==='orders'?openOrder():openQuickCapture();$('#refreshBtn').onclick=forceSyncRefresh;$('#menuBtn').onclick=()=>{currentView='settings';currentPrimary=currentSecondary=currentCity=null;currentAppFilter='';render()};$('#pasteBtn').onclick=async()=>{if(currentView==='orders')return openOrder();try{const t=await navigator.clipboard.readText();openQuickCapture(t)}catch{openQuickCapture();toast('استخدم لصق داخل الخانة')}};$('#search').oninput=render;$('#saveItem').onclick=saveItem;$('#saveOrder').onclick=saveOrder;$('#quickSaveInbox').onclick=saveQuickInbox;$('#quickOrganize').onclick=organizeQuick;$('#quickContent').oninput=e=>{updateDetection('#quickDetected',e.target.value);updateSmartCategoryHint(e.target.value,true)};$('#itemContent').oninput=e=>{updateDetection('#itemDetect',e.target.value);updateSmartCategoryHint(e.target.value,false)};$('#filterBtn').onclick=openAdvancedFilters;$('#applyFilters').onclick=applyAdvancedFilters;$('#resetFilters').onclick=resetAdvancedFilters;$('#advPrimary').onchange=()=>{advancedFilters.primary=$('#advPrimary').value;advancedFilters.secondary='';fillAdvancedFilterOptions()};$('#smartOrderBtn').onclick=()=>applySmartOrder($('#smartOrderInput').value);$('#smartOrderInput').oninput=()=>{const x=$('#smartOrderInput').value;if(/^https?:\/\//i.test(x.trim()))applySmartOrder(x,true)};$('#trackingUrl').onchange=()=>applySmartOrder($('#trackingUrl').value,true);$('#trashList').onclick=async e=>{const r=e.target.closest('[data-trash-restore],[data-trash-delete]');if(!r)return;if(r.dataset.trashRestore){const rec=trash.find(x=>x.id===r.dataset.trashRestore);if(rec){await put(rec.entityType==='order'?'orders':'items',rec.data);await del('trash',rec.id);trash=await getAll('trash');items=await getAll('items');orders=await getAll('orders');renderTrash();render();toast('تمت الاستعادة')}}if(r.dataset.trashDelete&&confirm('حذف نهائي؟')){await del('trash',r.dataset.trashDelete);trash=await getAll('trash');renderTrash();render()}};$('#favoriteToggle').onclick=()=>{editFavorite=!editFavorite;$('#favoriteToggle').textContent=editFavorite?'★ في المفضلة':'☆ إضافة للمفضلة'};$('#pinToggle').onclick=()=>{editPinned=!editPinned;$('#pinToggle').textContent=editPinned?'⌁ مثبّت':'⌁ تثبيت بالأعلى'};
 $('#primaryField').onclick=()=>openPicker('primary');$('#secondaryField').onclick=()=>openPicker('secondary');$('#cityField').onclick=()=>openPicker('city');$('#manageParentField').onclick=()=>openPicker('managePrimary');$('#pickerOptions').onclick=e=>{const b=e.target.closest('[data-pick]');if(b)applyPick(b.dataset.pick||'')};$('#pickerAddBtn').onclick=addFromPicker;$('#addPrimaryBtn').onclick=addPrimaryManage;$('#addSecondaryBtn').onclick=addSecondaryManage;
 

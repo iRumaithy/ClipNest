@@ -1,0 +1,161 @@
+name: ClipNest — Madar automatic approval
+run-name: ClipNest — ${{ github.event_name }}
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'scripts/**'
+      - '**.md'
+      - '**.txt'
+  schedule:
+    - cron: '4-59/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clipnest-madar-${{ github.event_name == 'push' && github.sha || 'publisher' }}
+  cancel-in-progress: false
+
+env:
+  OWNER_HUB_URL: https://owner-hub-rumaithy.alromaithi-3bo0d.chatgpt.site
+  OWNER_HUB_APP_ID: clipnest
+
+jobs:
+  candidate:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Prepare built-in Madar helpers
+        shell: bash
+        run: |
+          node <<'MADAR_HELPERS'
+          const fs=require('node:fs');fs.mkdirSync('scripts',{recursive:true});const files={"verify-madar-deployment.mjs": "const url=new URL(process.env.SITE_URL||'');\nif(url.protocol!=='https:')throw Error('Missing HTTPS Pages URL');\nconst manifestUrl=new URL('madar-release.json?verify='+Date.now(),url.href.endsWith('/')?url:new URL(url.href+'/'));\nconst r=await fetch(manifestUrl,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});\nif(!r.ok)throw Error('Could not confirm the live Pages release');\nconst value=await r.json();\nif(value.commit!==process.env.RELEASE_COMMIT||value.version!==process.env.RELEASE_VERSION)throw Error('Live Pages files do not match the approved version. Activation blocked; retry after the CDN refreshes.');\nconsole.log('Live Pages release matches the approved commit and version.');\n", "madar-auto.mjs": "// No interactive inputs or GitHub PAT. Secrets are used only for Madar requests.\nimport {execFileSync} from 'node:child_process';\nimport {readFileSync,existsSync,appendFileSync} from 'node:fs';\nconst git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();\nconst sha=git('rev-parse','HEAD'),mode=process.argv[2];\nfunction output(key,value){if(!/^[a-z_]+$/.test(key)||/[\\r\\n]/.test(String(value)))throw Error('Invalid output');appendFileSync(process.env.GITHUB_OUTPUT,key+'='+value+'\\n');}\nfunction required(key){if(!process.env[key])throw Error('Missing '+key);return process.env[key];}\nasync function request(path,body){const origin=new URL(required('OWNER_HUB_URL'));if(origin.protocol!=='https:'||origin.username||origin.password)throw Error('Invalid Madar URL');const u=new URL('/api/integration/'+path,origin);if(!body&&!u.searchParams.has('appId'))u.searchParams.set('appId',required('OWNER_HUB_APP_ID'));const r=await fetch(u,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(30000),headers:{Authorization:'Bearer '+required('OWNER_HUB_TOKEN'),'OAI-Sites-Authorization':'Bearer '+required('OWNER_HUB_SITE_ACCESS'),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('Madar HTTP '+r.status);return r.json();}\ntry{\n if(required('OWNER_HUB_APP_ID')!==\"clipnest\")throw Error('Wrong app');\n if(mode==='check'){const u='gate?appId='+required('OWNER_HUB_APP_ID')+'&version='+encodeURIComponent(required('RELEASE_VERSION'))+'&commit='+required('RELEASE_COMMIT');if((await request(u)).allowed!==true)throw Error('Release is not approved');}\n else if(mode==='preflight'||mode==='complete'){const result=await request(mode,{appId:required('OWNER_HUB_APP_ID'),version:required('RELEASE_VERSION'),commitSha:required('RELEASE_COMMIT')});if(result.ok!==true)throw Error('Publication not confirmed');}\n else if(mode==='submit'){\n  const version=readFileSync('index.html','utf8').match(/const VERSION=['\"]([^'\"]+)['\"]/)?.[1];\n  if(!/^\\d+\\.\\d+\\.\\d+$/.test(version||''))throw Error('Invalid app VERSION');\n  const message=git('show','-s','--format=%B','HEAD'),title=message.split('\\n')[0].slice(0,200)||'تحديث ClipNest '+version;\n  const changed=git('diff-tree','--root','--no-commit-id','--name-only','-r',sha).split('\\n').filter(x=>!x.startsWith('.')&&!x.startsWith('scripts/')).slice(0,60);\n  const notes=existsSync('RELEASE-NOTES-AR.md')?readFileSync('RELEASE-NOTES-AR.md','utf8').trim():message+'\\n\\nالملفات المتغيرة:\\n'+changed.join('\\n');\n  const result=await request('candidate',{appId:'clipnest',version,commitSha:sha,title,changes:notes.slice(0,10000),automatic:true});if(result.ok!==true)throw Error('Candidate not accepted');\n  output('version',version);output('commit',sha);console.log('Private immutable preview linked; candidate submitted.');\n }else if(mode==='approved'){\n  const result=await request('next-publication');\n  if(result.ready!==true){output('ready','false');console.log('No approved release awaiting publication.');}\n  else{if(!/^\\d+(?:\\.\\d+){1,2}(?:-[A-Za-z0-9._-]+)?$/.test(result.version)||!/^[a-f0-9]{40}$/.test(result.commit))throw Error('Invalid publication response');output('ready','true');output('version',result.version);output('commit',result.commit);}\n }else throw Error('Use submit or approved');\n}catch(error){console.error(error.message);process.exit(1);}\n", "prepare-madar-site.mjs": "import {execFileSync} from 'node:child_process';\nimport {readFileSync,writeFileSync,mkdirSync,cpSync,rmSync,lstatSync} from 'node:fs';\nconst sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();\nif(sha!==process.env.RELEASE_COMMIT)throw Error('Reviewed commit mismatch');\nconst version=process.env.RELEASE_VERSION;if(!version)throw Error('Missing version');\nrmSync('_site',{recursive:true,force:true});mkdirSync('_site');\nconst files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\\0').filter(Boolean);\nfor(const path of files){if(path.split('/').some(x=>x.startsWith('.'))||/^(scripts|src|docs|tests|integrations)\\//.test(path)||/\\.(md|txt|sql|yml|yaml|map)$/.test(path)||path==='package.json'||path.includes('lock.'))continue;if(lstatSync(path).isSymbolicLink())throw Error('Symlink blocked');mkdirSync('_site/'+path.split('/').slice(0,-1).join('/'),{recursive:true});cpSync(path,'_site/'+path);}\nwriteFileSync('_site/madar-release.json',JSON.stringify({version,commit:sha}));writeFileSync('_site/.nojekyll','');\n"};for(const [name,content] of Object.entries(files))fs.writeFileSync('scripts/'+name,content);
+          MADAR_HELPERS
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Automatically prepare private review from this exact commit
+        run: node scripts/madar-auto.mjs submit
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+
+  approved:
+    needs: candidate
+    if: always() && (needs.candidate.result == 'success' || github.event_name != 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 305
+    outputs:
+      ready: ${{ steps.release.outputs.ready }}
+      version: ${{ steps.release.outputs.version }}
+      commit: ${{ steps.release.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Prepare built-in Madar helpers
+        shell: bash
+        run: |
+          node <<'MADAR_HELPERS'
+          const fs=require('node:fs');fs.mkdirSync('scripts',{recursive:true});const files={"verify-madar-deployment.mjs": "const url=new URL(process.env.SITE_URL||'');\nif(url.protocol!=='https:')throw Error('Missing HTTPS Pages URL');\nconst manifestUrl=new URL('madar-release.json?verify='+Date.now(),url.href.endsWith('/')?url:new URL(url.href+'/'));\nconst r=await fetch(manifestUrl,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});\nif(!r.ok)throw Error('Could not confirm the live Pages release');\nconst value=await r.json();\nif(value.commit!==process.env.RELEASE_COMMIT||value.version!==process.env.RELEASE_VERSION)throw Error('Live Pages files do not match the approved version. Activation blocked; retry after the CDN refreshes.');\nconsole.log('Live Pages release matches the approved commit and version.');\n", "madar-auto.mjs": "// No interactive inputs or GitHub PAT. Secrets are used only for Madar requests.\nimport {execFileSync} from 'node:child_process';\nimport {readFileSync,existsSync,appendFileSync} from 'node:fs';\nconst git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();\nconst sha=git('rev-parse','HEAD'),mode=process.argv[2];\nfunction output(key,value){if(!/^[a-z_]+$/.test(key)||/[\\r\\n]/.test(String(value)))throw Error('Invalid output');appendFileSync(process.env.GITHUB_OUTPUT,key+'='+value+'\\n');}\nfunction required(key){if(!process.env[key])throw Error('Missing '+key);return process.env[key];}\nasync function request(path,body){const origin=new URL(required('OWNER_HUB_URL'));if(origin.protocol!=='https:'||origin.username||origin.password)throw Error('Invalid Madar URL');const u=new URL('/api/integration/'+path,origin);if(!body&&!u.searchParams.has('appId'))u.searchParams.set('appId',required('OWNER_HUB_APP_ID'));const r=await fetch(u,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(30000),headers:{Authorization:'Bearer '+required('OWNER_HUB_TOKEN'),'OAI-Sites-Authorization':'Bearer '+required('OWNER_HUB_SITE_ACCESS'),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('Madar HTTP '+r.status);return r.json();}\ntry{\n if(required('OWNER_HUB_APP_ID')!==\"clipnest\")throw Error('Wrong app');\n if(mode==='check'){const u='gate?appId='+required('OWNER_HUB_APP_ID')+'&version='+encodeURIComponent(required('RELEASE_VERSION'))+'&commit='+required('RELEASE_COMMIT');if((await request(u)).allowed!==true)throw Error('Release is not approved');}\n else if(mode==='preflight'||mode==='complete'){const result=await request(mode,{appId:required('OWNER_HUB_APP_ID'),version:required('RELEASE_VERSION'),commitSha:required('RELEASE_COMMIT')});if(result.ok!==true)throw Error('Publication not confirmed');}\n else if(mode==='submit'){\n  const version=readFileSync('index.html','utf8').match(/const VERSION=['\"]([^'\"]+)['\"]/)?.[1];\n  if(!/^\\d+\\.\\d+\\.\\d+$/.test(version||''))throw Error('Invalid app VERSION');\n  const message=git('show','-s','--format=%B','HEAD'),title=message.split('\\n')[0].slice(0,200)||'تحديث ClipNest '+version;\n  const changed=git('diff-tree','--root','--no-commit-id','--name-only','-r',sha).split('\\n').filter(x=>!x.startsWith('.')&&!x.startsWith('scripts/')).slice(0,60);\n  const notes=existsSync('RELEASE-NOTES-AR.md')?readFileSync('RELEASE-NOTES-AR.md','utf8').trim():message+'\\n\\nالملفات المتغيرة:\\n'+changed.join('\\n');\n  const result=await request('candidate',{appId:'clipnest',version,commitSha:sha,title,changes:notes.slice(0,10000),automatic:true});if(result.ok!==true)throw Error('Candidate not accepted');\n  output('version',version);output('commit',sha);console.log('Private immutable preview linked; candidate submitted.');\n }else if(mode==='approved'){\n  const result=await request('next-publication');\n  if(result.ready!==true){output('ready','false');console.log('No approved release awaiting publication.');}\n  else{if(!/^\\d+(?:\\.\\d+){1,2}(?:-[A-Za-z0-9._-]+)?$/.test(result.version)||!/^[a-f0-9]{40}$/.test(result.commit))throw Error('Invalid publication response');output('ready','true');output('version',result.version);output('commit',result.commit);}\n }else throw Error('Use submit or approved');\n}catch(error){console.error(error.message);process.exit(1);}\n", "prepare-madar-site.mjs": "import {execFileSync} from 'node:child_process';\nimport {readFileSync,writeFileSync,mkdirSync,cpSync,rmSync,lstatSync} from 'node:fs';\nconst sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();\nif(sha!==process.env.RELEASE_COMMIT)throw Error('Reviewed commit mismatch');\nconst version=process.env.RELEASE_VERSION;if(!version)throw Error('Missing version');\nrmSync('_site',{recursive:true,force:true});mkdirSync('_site');\nconst files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\\0').filter(Boolean);\nfor(const path of files){if(path.split('/').some(x=>x.startsWith('.'))||/^(scripts|src|docs|tests|integrations)\\//.test(path)||/\\.(md|txt|sql|yml|yaml|map)$/.test(path)||path==='package.json'||path.includes('lock.'))continue;if(lstatSync(path).isSymbolicLink())throw Error('Symlink blocked');mkdirSync('_site/'+path.split('/').slice(0,-1).join('/'),{recursive:true});cpSync(path,'_site/'+path);}\nwriteFileSync('_site/madar-release.json',JSON.stringify({version,commit:sha}));writeFileSync('_site/.nojekyll','');\n"};for(const [name,content] of Object.entries(files))fs.writeFileSync('scripts/'+name,content);
+          MADAR_HELPERS
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Watch owner approval after upload (up to five hours)
+        if: github.event_name == 'push'
+        run: |
+          for attempt in $(seq 1 900); do
+            node scripts/madar-auto.mjs approved > /dev/null
+            if grep -q '^ready=true$' "$GITHUB_OUTPUT"; then break; fi
+            sleep 20
+          done
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+      - name: Get the latest exact approved release from Madar
+        id: release
+        run: node scripts/madar-auto.mjs approved
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+
+  publish:
+    concurrency:
+      group: clipnest-madar-production
+      cancel-in-progress: false
+    needs: approved
+    if: always() && needs.approved.result == 'success' && needs.approved.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      RELEASE_VERSION: ${{ needs.approved.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.approved.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_COMMIT }}
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Prepare built-in Madar helpers
+        shell: bash
+        run: |
+          node <<'MADAR_HELPERS'
+          const fs=require('node:fs');fs.mkdirSync('scripts',{recursive:true});const files={"verify-madar-deployment.mjs": "const url=new URL(process.env.SITE_URL||'');\nif(url.protocol!=='https:')throw Error('Missing HTTPS Pages URL');\nconst manifestUrl=new URL('madar-release.json?verify='+Date.now(),url.href.endsWith('/')?url:new URL(url.href+'/'));\nconst r=await fetch(manifestUrl,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});\nif(!r.ok)throw Error('Could not confirm the live Pages release');\nconst value=await r.json();\nif(value.commit!==process.env.RELEASE_COMMIT||value.version!==process.env.RELEASE_VERSION)throw Error('Live Pages files do not match the approved version. Activation blocked; retry after the CDN refreshes.');\nconsole.log('Live Pages release matches the approved commit and version.');\n", "madar-auto.mjs": "// No interactive inputs or GitHub PAT. Secrets are used only for Madar requests.\nimport {execFileSync} from 'node:child_process';\nimport {readFileSync,existsSync,appendFileSync} from 'node:fs';\nconst git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();\nconst sha=git('rev-parse','HEAD'),mode=process.argv[2];\nfunction output(key,value){if(!/^[a-z_]+$/.test(key)||/[\\r\\n]/.test(String(value)))throw Error('Invalid output');appendFileSync(process.env.GITHUB_OUTPUT,key+'='+value+'\\n');}\nfunction required(key){if(!process.env[key])throw Error('Missing '+key);return process.env[key];}\nasync function request(path,body){const origin=new URL(required('OWNER_HUB_URL'));if(origin.protocol!=='https:'||origin.username||origin.password)throw Error('Invalid Madar URL');const u=new URL('/api/integration/'+path,origin);if(!body&&!u.searchParams.has('appId'))u.searchParams.set('appId',required('OWNER_HUB_APP_ID'));const r=await fetch(u,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(30000),headers:{Authorization:'Bearer '+required('OWNER_HUB_TOKEN'),'OAI-Sites-Authorization':'Bearer '+required('OWNER_HUB_SITE_ACCESS'),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('Madar HTTP '+r.status);return r.json();}\ntry{\n if(required('OWNER_HUB_APP_ID')!==\"clipnest\")throw Error('Wrong app');\n if(mode==='check'){const u='gate?appId='+required('OWNER_HUB_APP_ID')+'&version='+encodeURIComponent(required('RELEASE_VERSION'))+'&commit='+required('RELEASE_COMMIT');if((await request(u)).allowed!==true)throw Error('Release is not approved');}\n else if(mode==='preflight'||mode==='complete'){const result=await request(mode,{appId:required('OWNER_HUB_APP_ID'),version:required('RELEASE_VERSION'),commitSha:required('RELEASE_COMMIT')});if(result.ok!==true)throw Error('Publication not confirmed');}\n else if(mode==='submit'){\n  const version=readFileSync('index.html','utf8').match(/const VERSION=['\"]([^'\"]+)['\"]/)?.[1];\n  if(!/^\\d+\\.\\d+\\.\\d+$/.test(version||''))throw Error('Invalid app VERSION');\n  const message=git('show','-s','--format=%B','HEAD'),title=message.split('\\n')[0].slice(0,200)||'تحديث ClipNest '+version;\n  const changed=git('diff-tree','--root','--no-commit-id','--name-only','-r',sha).split('\\n').filter(x=>!x.startsWith('.')&&!x.startsWith('scripts/')).slice(0,60);\n  const notes=existsSync('RELEASE-NOTES-AR.md')?readFileSync('RELEASE-NOTES-AR.md','utf8').trim():message+'\\n\\nالملفات المتغيرة:\\n'+changed.join('\\n');\n  const result=await request('candidate',{appId:'clipnest',version,commitSha:sha,title,changes:notes.slice(0,10000),automatic:true});if(result.ok!==true)throw Error('Candidate not accepted');\n  output('version',version);output('commit',sha);console.log('Private immutable preview linked; candidate submitted.');\n }else if(mode==='approved'){\n  const result=await request('next-publication');\n  if(result.ready!==true){output('ready','false');console.log('No approved release awaiting publication.');}\n  else{if(!/^\\d+(?:\\.\\d+){1,2}(?:-[A-Za-z0-9._-]+)?$/.test(result.version)||!/^[a-f0-9]{40}$/.test(result.commit))throw Error('Invalid publication response');output('ready','true');output('version',result.version);output('commit',result.commit);}\n }else throw Error('Use submit or approved');\n}catch(error){console.error(error.message);process.exit(1);}\n", "prepare-madar-site.mjs": "import {execFileSync} from 'node:child_process';\nimport {readFileSync,writeFileSync,mkdirSync,cpSync,rmSync,lstatSync} from 'node:fs';\nconst sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();\nif(sha!==process.env.RELEASE_COMMIT)throw Error('Reviewed commit mismatch');\nconst version=process.env.RELEASE_VERSION;if(!version)throw Error('Missing version');\nrmSync('_site',{recursive:true,force:true});mkdirSync('_site');\nconst files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\\0').filter(Boolean);\nfor(const path of files){if(path.split('/').some(x=>x.startsWith('.'))||/^(scripts|src|docs|tests|integrations)\\//.test(path)||/\\.(md|txt|sql|yml|yaml|map)$/.test(path)||path==='package.json'||path.includes('lock.'))continue;if(lstatSync(path).isSymbolicLink())throw Error('Symlink blocked');mkdirSync('_site/'+path.split('/').slice(0,-1).join('/'),{recursive:true});cpSync(path,'_site/'+path);}\nwriteFileSync('_site/madar-release.json',JSON.stringify({version,commit:sha}));writeFileSync('_site/.nojekyll','');\n"};for(const [name,content] of Object.entries(files))fs.writeFileSync('scripts/'+name,content);
+          MADAR_HELPERS
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Require the exact reviewed commit
+        run: node scripts/madar-auto.mjs check
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+      - name: Verify version routing and backend before publication
+        run: node scripts/madar-auto.mjs preflight
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+      - name: Prepare the same approved files
+        run: node scripts/prepare-madar-site.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Recheck approval immediately before Pages
+        run: node scripts/madar-auto.mjs check
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}
+      - name: Deploy approved files
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify Pages serves the exact approved commit
+        run: node scripts/verify-madar-deployment.mjs
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+      - name: Activate release for ClipNest users and record publication
+        run: node scripts/madar-auto.mjs complete
+        env:
+          OWNER_HUB_TOKEN: ${{ secrets.OWNER_HUB_TOKEN }}
+          OWNER_HUB_SITE_ACCESS: ${{ secrets.OWNER_HUB_SITE_ACCESS }}

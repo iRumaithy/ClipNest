@@ -1,14 +1,14 @@
 {
-  "name": "ClipNest 2.0 — المحفوظات وطلباتي",
+  "name": "ClipNest — مساحة محفوظاتك",
   "short_name": "ClipNest",
-  "description": "تنظيم المحفوظات والطلبات مع بحث ذكي ومزامنة اختيارية",
+  "description": "مساحتك لتنظيم الروابط والنصوص والأفكار",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F8F0DF",
-  "theme_color": "#F8F0DF",
+  "background_color": "#f1f4fa",
+  "theme_color": "#f1f4fa",
   "icons": [
     {
       "src": "icon-192.png",
